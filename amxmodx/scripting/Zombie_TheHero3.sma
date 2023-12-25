@@ -49,7 +49,7 @@ const SECONDARY_WEAPONS_BIT_SUM = (1<<CSW_P228)|(1<<CSW_ELITE)|(1<<CSW_FIVESEVEN
 const NADE_WEAPONS_BIT_SUM = ((1<<CSW_HEGRENADE)|(1<<CSW_SMOKEGRENADE)|(1<<CSW_FLASHBANG))
 */
 // Game Vars
-new g_game_playable, g_MaxPlayers, g_TeamScore[PlayerTeams], g_msgDeathMsg,
+new g_game_playable, g_MaxPlayers, g_TeamScore[PlayerTeams], 
 g_Forwards[MAX_FORWARD], g_gamestart, g_endround, g_WinText[PlayerTeams][64], g_countdown_count,
 g_zombieclass_i, g_fwResult, g_classchoose_time, Float:g_Delay_ComeSound, g_SyncHud[MAX_SYNCHUD]
 new g_zombie[33], g_hero[33], g_hero_locked[33], g_iRespawning[33], g_sex[33], g_StartHealth[33], g_StartArmor[33],
@@ -123,12 +123,7 @@ new Float:g_fDamageMulti[] =
 	2.3
 }
 
-// Restore Health Problem
-new Restore_Health_Time, Restore_Amount_Host, Restore_Amount_Origin
-new g_Msg_SayText, g_MsgScreenFade
-
 // KnockBack
-
 new  g_kbEnabled, g_kbDamage, g_kbPower, g_kbZVel//,Float:g_kbWpnPower[CSW_P90+1]
 /*
 new const WEAPONENTNAMES[][] = { "", "weapon_p228", "", "weapon_scout", "weapon_hegrenade", "weapon_xm1014", "weapon_c4", "weapon_mac10",
@@ -262,8 +257,10 @@ enum
 new const CS_TEAM_NAMES[][] = { "UNASSIGNED", "TERRORIST", "CT", "SPECTATOR" }
 
 new Float:g_TeamMsgTargetTime
-new g_MsgTeamInfo, g_MsgScoreInfo
+new g_MsgTeamInfo, g_MsgScoreInfo, g_msgDeathMsg, g_Msg_SayText, g_MsgScreenFade
 
+// Restore Health Problem
+new Restore_Health_Time, Restore_Amount_Host, Restore_Amount_Origin
 new const HealerSpr[] = "sprites/zombie_thehero/zombihealer.spr" // temp
 
 
