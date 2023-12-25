@@ -18,7 +18,7 @@ enum
 	FWD_ITEM_SELECTED_POST
 }
 
-new g_item_count, g_forward_dummy, g_free_item
+new g_item_count, g_forward_dummy
 new Array:item_name, Array:item_desc, Array:item_cost, Array:item_team, Array:item_permanent_buy
 new g_bought_item[33][MAX_ITEM], g_item_forward[MAX_FORWARD]
 new g_zombie_appear
@@ -29,7 +29,6 @@ public plugin_init()
 		set_fail_state("[ZB3] Error: No Item Loaded...")
 		
 	register_plugin(PLUGIN, VERSION, AUTHOR)
-	RegisterHam(Ham_Spawn, "player", "fw_Spawn_Post", 1)
 	register_dictionary("zombie_thehero2.txt")
 
 	register_forward(FM_ClientConnect, "fw_client_connect" );
@@ -55,12 +54,7 @@ public plugin_precache()
 	item_cost = ArrayCreate(1, 1)
 	item_team = ArrayCreate(1, 1)
 	item_permanent_buy = ArrayCreate(1, 1)
-}/*
-public cmd_free(id)
-{
-	g_free_item = !g_free_item
-	client_print(id, print_console, "[ZB3 ITEM] Free = %i", g_free_item)
-}*/
+}
 public fw_client_connect(id)
 {
 	reset_value_handle(id)
@@ -79,42 +73,35 @@ public reset_value_handle(id)
 
 public zb3_game_start(start_type) 
 {
-	if(start_type == GAMESTART_NEWROUND) g_zombie_appear = 0
-	else if(start_type == GAMESTART_ZOMBIEAPPEAR) g_zombie_appear = 1
-}
-public fw_Spawn_Post(id)
-{
-	if(!is_user_alive(id))
-		return HAM_IGNORED
-	if(zb3_get_user_zombie(id))
-		return HAM_IGNORED
-		
-	//client_printc(id, "!g[Zombie: The Hero]!n Bam !g(M)!n de mua Item")
-	
-	return HAM_HANDLED
+	switch(start_type)
+	{
+		case GAMESTART_NEWROUND: g_zombie_appear = 0
+		case GAMESTART_ZOMBIEAPPEAR: g_zombie_appear = 1
+	}
 }
 
 public cmd_openmenu(id)
 {
 	if(!is_user_connected(id) || !is_user_alive(id))
 		return PLUGIN_CONTINUE
-	if(cs_get_user_team(id) == CS_TEAM_CT)
+
+	switch(zb3_get_user_zombie(id))
 	{
-		if(!g_zombie_appear)
-		{
-			//if(!zb3_get_user_hero(id))
-			open_menu_shop(id, TEAM2_HUMAN)
-				
-			return PLUGIN_HANDLED
-		} else {
-			client_printc(id, "!g[Zombie: The Hero]!n %L", LANG_PLAYER, "SHOP_BUY_START")
+		case true: {
+			open_menu_shop(id, TEAM2_ZOMBIE)
 			return PLUGIN_HANDLED
 		}
-	} else if(cs_get_user_team(id) == CS_TEAM_T) {
-		open_menu_shop(id, TEAM2_ZOMBIE)
-		return PLUGIN_HANDLED
+		case false: 
+		{
+			if(!g_zombie_appear) {
+				open_menu_shop(id, TEAM2_HUMAN)	
+				return PLUGIN_HANDLED
+			} else {
+				client_printc(id, "!g[Zombie: The Hero]!n %L", LANG_PLAYER, "SHOP_BUY_START")
+				return PLUGIN_HANDLED
+			}
+		}
 	}
-	
 	return PLUGIN_CONTINUE
 }
 
@@ -127,12 +114,12 @@ public open_menu_shop(id, team)
 	for(new i = 0; i < g_item_count; i++)
 	{
 		temp_int2 = ArrayGetCell(item_team, i)
-		
+		temp_int = zb3_get_freeitem_status() ? 0 : ArrayGetCell(item_cost, i)
+		ArrayGetString(item_name, i, temp_string, sizeof(temp_string))
+		ArrayGetString(item_desc, i, temp_string2, sizeof(temp_string2))
+
 		if(temp_int2 == team)
 		{
-			ArrayGetString(item_name, i, temp_string, sizeof(temp_string))
-			ArrayGetString(item_desc, i, temp_string2, sizeof(temp_string2))
-			temp_int = ArrayGetCell(item_cost, i)
 			formatex(temp_string4, sizeof(temp_string4), "%i", i)
 			
 			if(ArrayGetCell(item_permanent_buy, i))
@@ -148,7 +135,6 @@ public open_menu_shop(id, team)
 				formatex(temp_string5, sizeof(temp_string5), "%L", LANG_PLAYER, "SHOP_ITEM_ONCETIME_USE")
 				formatex(temp_string3, sizeof(temp_string3), "%s \y%s \r$%i (%s)", temp_string, temp_string2, temp_int, temp_string5)
 			}
-			
 			menu_additem(item_menu, temp_string3, temp_string4)
 		}
 	}
@@ -184,7 +170,7 @@ public item_menu_handle(id, menu, item)
 	static CurMoney, Cost, temp_string[128], temp_string2[128], temp_string3[10]
 	
 	CurMoney = cs_get_user_money(id)
-	Cost = ArrayGetCell(item_cost, item_id)
+	Cost = zb3_get_freeitem_status() ? 0 : ArrayGetCell(item_cost, item_id)
 	
 	ArrayGetString(item_name, item_id, temp_string, sizeof(temp_string))
 	

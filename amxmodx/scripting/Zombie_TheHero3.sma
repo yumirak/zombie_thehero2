@@ -360,9 +360,9 @@ public plugin_init()
 	set_cvar_num("sv_skycolor_g", 0)
 	set_cvar_num("sv_skycolor_b", 0)
 	
-	register_clcmd("zb3_infect", "cmd_infect")
-	register_clcmd("zb3_hero", "cmd_hero")
-	register_clcmd("zb3_free", "cmd_free")
+	//register_clcmd("zb3_infect", "cmd_infect")
+	//register_clcmd("zb3_hero", "cmd_hero")
+	//register_clcmd("zb3_free", "cmd_free")
 	register_clcmd("nightvision", "cmd_nightvision")
 	register_clcmd("drop", "cmd_drop")
 	register_clcmd("buyammo1","set_menu_zombieclass")
@@ -415,13 +415,13 @@ public cmd_hero(id)
 		client_print(id, print_console, "[ZB3] Player %i not valid !!!", target)
 	}
 }
-
+/*
 public cmd_free(id)
 {
 	g_free_gun = !g_free_gun
 	client_print(id, print_console, "[ZB3 MAIN] Free = %i", g_free_gun)
 }
-
+*/
 public fw_client_block(id)
 {
 	if(!is_user_alive(id)) 
@@ -643,6 +643,7 @@ public plugin_natives()
 	register_native("zb3_set_user_gravity", "native_set_user_gravity", 1) 
 	register_native("zb3_reset_user_gravity", "native_reset_user_gravity", 1) 
 
+	register_native("zb3_get_freeitem_status", "native_get_freeitem_status", 1) 
 	//register_native("zb3_set_user_changeclass", "native_set_user_changeclass", 1) 
 }
 public plugin_cfg()
@@ -1120,20 +1121,20 @@ public native_get_zombietype(id)
 }
 public native_get_user_currgrav(id)
 {
-	if(!is_user_connected(id) )
+	if(!is_user_connected(id))
 		return 0
 	return pev(id, pev_gravity)
 }
 public native_get_user_gravity(id)
 {
-	if(!is_user_connected(id) )
+	if(!is_user_connected(id))
 		return 0
 	if(g_zombie[id]) return ArrayGetCell(zombie_gravity, g_zombie_class[id])
 	else return pev(id, pev_gravity )//ArrayGetCell(zombie_gravity, g_zombie_class[id])
 }
 public native_set_user_gravity(id, Float:fGravity)
 {
-	if(!is_user_connected(id) )
+	if(!is_user_connected(id))
 		return 
 	//if(g_zombie[id]) return ArrayGetCell(zombie_gravity, g_zombie_class[id])
 	//else return ArrayGetCell(zombie_gravity, g_zombie_class[id])
@@ -1141,12 +1142,17 @@ public native_set_user_gravity(id, Float:fGravity)
 }
 public native_reset_user_gravity(id)
 {
-	if(!is_user_connected(id) )
+	if(!is_user_connected(id))
 		return 
 
 	if(g_zombie[id]) set_pev(id, pev_gravity, ArrayGetCell(zombie_gravity, g_zombie_class[id]) ) 
 	else set_pev(id, pev_gravity, 1.0 )
 }
+public native_get_freeitem_status()
+{
+	return g_free_gun
+}
+
 //// End New Natives
 // ========================= AMXX FORWARDS ========================
 // ================================================================
@@ -3130,6 +3136,7 @@ public load_config_file()
 	//static buffer[128]
 	
 	// GamePlay Configs
+	g_free_gun = amx_load_setting_int(SETTING_FILE, "Config Value", "FREE_ITEMS", countdown_time)
 	countdown_time = amx_load_setting_int(SETTING_FILE, "Config Value", "COUNTDOWN_TIME", countdown_time)
 
 	zombie_level2_health = amx_load_setting_int(SETTING_FILE, "Config Value", "ZB_LV2_HEALTH", zombie_level2_health)

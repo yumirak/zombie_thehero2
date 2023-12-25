@@ -210,6 +210,8 @@ native zb3_get_user_currgrav(id);
 native zb3_get_user_gravity(id);
 native zb3_set_user_gravity(id, Float:fGravity);
 native zb3_reset_user_gravity(id);
+
+native zb3_get_freeitem_status();
 // End New Natives
 
 // Forwards

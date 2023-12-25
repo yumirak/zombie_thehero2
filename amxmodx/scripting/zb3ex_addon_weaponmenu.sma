@@ -66,6 +66,7 @@ public plugin_precache()
 public plugin_cfg()
 {
 	// Initialize 2
+	static Type
 	for(new i = 0; i < g_MaxPlayers; i++)
 	{
 		g_PreWeapon[i][WPN_PRIMARY] = g_FirstWeapon[WPN_PRIMARY]
@@ -80,25 +81,11 @@ public plugin_cfg()
 	g_WeaponListCount[WPN_MELEE] = 0
 	g_WeaponListCount[WPN_GRENADE] = 0
 	
-	static Type
 	for(new i = 0; i < g_TotalWeaponCount; i++)
 	{
 		Type = ArrayGetCell(ArWeaponType, i)
-		
-		if(Type == WPN_PRIMARY)
-		{
-			g_WeaponList[WPN_PRIMARY][g_WeaponListCount[WPN_PRIMARY]] = i
-			g_WeaponListCount[WPN_PRIMARY]++
-		} else if(Type == WPN_SECONDARY) {
-			g_WeaponList[WPN_SECONDARY][g_WeaponListCount[WPN_SECONDARY]] = i
-			g_WeaponListCount[WPN_SECONDARY]++
-		} else if(Type == WPN_MELEE) {
-			g_WeaponList[WPN_MELEE][g_WeaponListCount[WPN_MELEE]] = i
-			g_WeaponListCount[WPN_MELEE]++
-		} else if(Type == WPN_GRENADE) {
-			g_WeaponList[WPN_GRENADE][g_WeaponListCount[WPN_GRENADE]] = i
-			g_WeaponListCount[WPN_GRENADE]++
-		}
+		g_WeaponList[Type][g_WeaponListCount[Type]] = i
+		g_WeaponListCount[Type]++
 	}
 }
 
@@ -505,7 +492,7 @@ public Show_WpnSubMenu(id, WpnType, Page)
 			continue
 		
 		ArrayGetString(ArWeaponName, i, WeaponName, sizeof(WeaponName))
-		WeaponPrice = ArrayGetCell(ArWeaponCost, i)
+		WeaponPrice = zb3_get_freeitem_status() ? 0 : ArrayGetCell(ArWeaponCost, i)
 
 		ExecuteForward(g_Forwards[WPN_PRE_BOUGHT], g_fwResult, id, g_PreWeapon[id][WeaponType])
 		if(WeaponPrice > 0)
@@ -550,7 +537,7 @@ public MenuHandle_WpnSubMenu(id, Menu, Item)
 	new WeaponType, WeaponPrice, WeaponName[32]
 	
 	WeaponType = ArrayGetCell(ArWeaponType, ItemId)
-	WeaponPrice = ArrayGetCell(ArWeaponCost, ItemId)
+	WeaponPrice = zb3_get_freeitem_status() ? 0 : ArrayGetCell(ArWeaponCost, ItemId)
 	ArrayGetString(ArWeaponName, ItemId, WeaponName, sizeof(WeaponName))
 
 	new Money = cs_get_user_money(id)
