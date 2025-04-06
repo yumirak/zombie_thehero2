@@ -14,6 +14,8 @@
 #define VERSION "1.0"
 #define AUTHOR "Dias"
 
+// #define _DEBUG
+
 #define GAMENAME "Zombie: The Hero"
 #define GAMESYSTEMNAME "zombie_thehero"
 
@@ -43,11 +45,6 @@ new Float:g_PlayerMaxSpeed[33]
 #define MAX_FORWARD 10
 
 #define MAX_SYNCHUD 6
-/*
-const PRIMARY_WEAPONS_BIT_SUM = (1<<CSW_SCOUT)|(1<<CSW_XM1014)|(1<<CSW_MAC10)|(1<<CSW_AUG)|(1<<CSW_UMP45)|(1<<CSW_SG550)|(1<<CSW_GALIL)|(1<<CSW_FAMAS)|(1<<CSW_AWP)|(1<<CSW_MP5NAVY)|(1<<CSW_M249)|(1<<CSW_M3)|(1<<CSW_M4A1)|(1<<CSW_TMP)|(1<<CSW_G3SG1)|(1<<CSW_SG552)|(1<<CSW_AK47)|(1<<CSW_P90)
-const SECONDARY_WEAPONS_BIT_SUM = (1<<CSW_P228)|(1<<CSW_ELITE)|(1<<CSW_FIVESEVEN)|(1<<CSW_USP)|(1<<CSW_GLOCK18)|(1<<CSW_DEAGLE)
-const NADE_WEAPONS_BIT_SUM = ((1<<CSW_HEGRENADE)|(1<<CSW_SMOKEGRENADE)|(1<<CSW_FLASHBANG))
-*/
 // Game Vars
 new g_game_playable, g_MaxPlayers, g_TeamScore[PlayerTeams], 
 g_Forwards[MAX_FORWARD], g_gamestart, g_endround, g_WinText[PlayerTeams][64], g_countdown_count,
@@ -76,6 +73,11 @@ Array:zombie_sound_attack1, Array:zombie_sound_swing1, Array:zombie_sound_hitwal
 	
 new Array:zombie_sound_heal, Array:zombie_sound_evolution
 
+// Spawn Point Research
+#define MAX_SPAWN_POINT 100
+#define MAX_RETRY 33
+new Float:player_spawn_point[MAX_SPAWN_POINT][3]
+new player_spawn_point_count
 	
 // - Weather & Sky & NVG
 new g_rain, g_snow, g_fog, g_fog_density[10], g_fog_color[12]
@@ -125,108 +127,9 @@ new Float:g_fDamageMulti[] =
 
 // KnockBack
 new  g_kbEnabled, g_kbDamage, g_kbPower, g_kbZVel//,Float:g_kbWpnPower[CSW_P90+1]
-/*
-new const WEAPONENTNAMES[][] = { "", "weapon_p228", "", "weapon_scout", "weapon_hegrenade", "weapon_xm1014", "weapon_c4", "weapon_mac10",
-			"weapon_aug", "weapon_smokegrenade", "weapon_elite", "weapon_fiveseven", "weapon_ump45", "weapon_sg550",
-			"weapon_galil", "weapon_famas", "weapon_usp", "weapon_glock18", "weapon_awp", "weapon_mp5navy", "weapon_m249",
-			"weapon_m3", "weapon_m4a1", "weapon_tmp", "weapon_g3sg1", "weapon_flashbang", "weapon_deagle", "weapon_sg552",
-			"weapon_ak47", "weapon_knife", "weapon_p90" }
-
-new Float:kb_weapon_power[] = 
-{
-	-1.0,	// ---
-	2.4,	// P228
-	-1.0,	// ---
-	6.5,	// SCOUT
-	-1.0,	// ---
-	8.0,	// XM1014
-	-1.0,	// ---
-	2.3,	// MAC10
-	5.0,	// AUG
-	-1.0,	// ---
-	2.4,	// ELITE
-	2.0,	// FIVESEVEN
-	2.4,	// UMP45
-	5.3,	// SG550
-	5.5,	// GALIL
-	5.5,	// FAMAS
-	2.2,	// USP
-	2.0,	// GLOCK18
-	10.0,	// AWP
-	2.5,	// MP5NAVY
-	5.2,	// M249
-	8.0,	// M3
-	5.0,	// M4A1
-	2.4,	// TMP
-	6.5,	// G3SG1
-	-1.0,	// ---
-	5.3,	// DEAGLE
-	5.0,	// SG552
-	6.0,	// AK47
-	-1.0,	// ---
-	2.0		// P90
-}*/
 // CS Player PData Offsets (win32)
 #define PDATA_SAFE 2
 #define OFFSET_CSTEAMS 114
-
-// Spawn Point Research
-#define MAX_SPAWN_POINT 100
-#define MAX_RETRY 33
-new Float:player_spawn_point[MAX_SPAWN_POINT][3]
-new player_spawn_point_count
-
-/*
-const m_szAnimExtention = 492
-// FM CStrike
-enum CsArmorType
-{
-	ARMOR_NONE,
-	ARMOR_KEVLAR,
-	ARMOR_VESTHELM
-};
-
-enum CsInternalModel
-{
-	CS_DONTCHANGE, // 0
-	CS_CT_URBAN, // 1
-	CS_T_TERROR, // 2
-	CS_T_LEET, // 3
-	CS_T_ARCTIC, // 4
-	CS_CT_GSG9, // 5
-	CS_CT_GIGN, // 6
-	CS_CT_SAS, // 7
-	CS_T_GUERILLA, // 8
-	CS_CT_VIP, // 9
-	CZ_T_MILITIA, // 10
-	CZ_CT_SPETSNAZ // 11
-};
-
-enum
-{
-	OFFSET_AMMO_AWP = 377,
-	OFFSET_AMMO_SCOUT, // AK47, G3SG1
-	OFFSET_AMMO_M249,
-	OFFSET_AMMO_M4A1, // FAMAS, AUG, SG550, GALIL, SG552
-	OFFSET_AMMO_M3, // XM1014
-	OFFSET_AMMO_USP, // UMP45, MAC10
-	OFFSET_AMMO_FIVESEVEN, // P90
-	OFFSET_AMMO_DEAGLE,
-	OFFSET_AMMO_P228,
-	OFFSET_AMMO_GLOCK18, // MP5NAVY, TMP, ELITE
-	OFFSET_AMMO_FLASHBANG,
-	OFFSET_AMMO_HEGRENADE,
-	OFFSET_AMMO_SMOKEGRENADE,
-	OFFSET_AMMO_C4
-};
-
-static const _CSW_to_offset[] =
-{
-	0, OFFSET_AMMO_P228, OFFSET_AMMO_SCOUT, OFFSET_AMMO_HEGRENADE, OFFSET_AMMO_M3, OFFSET_AMMO_C4, OFFSET_AMMO_USP, OFFSET_AMMO_SMOKEGRENADE,
-	OFFSET_AMMO_GLOCK18, OFFSET_AMMO_FIVESEVEN, OFFSET_AMMO_USP, OFFSET_AMMO_M4A1, OFFSET_AMMO_M4A1, OFFSET_AMMO_M4A1, OFFSET_AMMO_USP, OFFSET_AMMO_GLOCK18,
-	OFFSET_AMMO_AWP, OFFSET_AMMO_GLOCK18, OFFSET_AMMO_M249, OFFSET_AMMO_M3, OFFSET_AMMO_M4A1, OFFSET_AMMO_GLOCK18, OFFSET_AMMO_SCOUT, OFFSET_AMMO_FLASHBANG,
-	OFFSET_AMMO_DEAGLE, OFFSET_AMMO_M4A1, OFFSET_AMMO_SCOUT, 0, OFFSET_AMMO_FIVESEVEN
-};*/
 
 #define LINUX_EXTRAOFFSET			5  // offsets 5 higher in Linux builds
 #define LINUX_EXTRAOFFSET_WEAPONS		4
@@ -356,17 +259,20 @@ public plugin_init()
 	set_cvar_num("sv_skycolor_r", 0)
 	set_cvar_num("sv_skycolor_g", 0)
 	set_cvar_num("sv_skycolor_b", 0)
-	
-	//register_clcmd("zb3_infect", "cmd_infect")
-	//register_clcmd("zb3_hero", "cmd_hero")
-	//register_clcmd("zb3_free", "cmd_free")
+
+#if defined _DEBUG
+	register_clcmd("zb3_infect", "cmd_infect")
+	register_clcmd("zb3_hero", "cmd_hero")
+	register_clcmd("zb3_free", "cmd_free")
+#endif
+
 	register_clcmd("nightvision", "cmd_nightvision")
 	register_clcmd("drop", "cmd_drop")
 	register_clcmd("buyammo1","set_menu_zombieclass")
 
 	set_task(1.0, "Time_Change", _, _, _, "b")
 }
-
+#if defined _DEBUG
 public cmd_infect(id)
 {
 	if(!is_user_connected(id))
@@ -412,13 +318,11 @@ public cmd_hero(id)
 		client_print(id, print_console, "[ZB3] Player %i not valid !!!", target)
 	}
 }
-/*
 public cmd_free(id)
 {
 	g_free_gun = !g_free_gun
 	client_print(id, print_console, "[ZB3 MAIN] Free = %i", g_free_gun)
 }
-*/
 public fw_client_block(id)
 {
 	if(!is_user_alive(id)) 
@@ -426,7 +330,7 @@ public fw_client_block(id)
 
     	return FMRES_SUPERCEDE; 
 }
-
+#endif
 public plugin_precache()
 {
 	// Register Forward
@@ -641,7 +545,6 @@ public plugin_natives()
 	register_native("zb3_reset_user_gravity", "native_reset_user_gravity", 1) 
 
 	register_native("zb3_get_freeitem_status", "native_get_freeitem_status", 1) 
-	//register_native("zb3_set_user_changeclass", "native_set_user_changeclass", 1) 
 }
 public plugin_cfg()
 {
@@ -1918,23 +1821,8 @@ public zombie_restore_health(id)
 			
 			// play sound heal	
 			ArrayGetString(zombie_sound_heal, g_zombie_class[id], sound_heal, charsmax(sound_heal))
-			//PlaySound(id, sound_heal)
 			EmitSound(id, CHAN_VOICE, sound_heal)
 			zb3_showattachment(id, HealerSpr, 1.0, 1.0, 0.5, 19)
-			/*
-			if(!g_nvg[id])
-			{
-				// Make a screen fade 
-				message_begin(MSG_ONE_UNRELIABLE, g_MsgScreenFade, _, id)
-				write_short((1<<12) * 1) // duration
-				write_short(0) // hold time
-				write_short(0x0000) // fade type
-				write_byte(0) // red
-				write_byte(150) // green
-				write_byte(0) // blue
-				write_byte(10) // alpha
-				message_end()
-			}*/
 		}
 	}
 }
@@ -2078,7 +1966,7 @@ public handle_user_nvision(id)
 	alternatively use LightStyle "z" for safer and closer to style "0".
 	*/
 
-	set_player_light(id, g_nvg[id] ? "0" : g_light)
+	set_player_light(id, g_nvg[id] ? "z" : g_light)
 
 }
 
@@ -2703,22 +2591,6 @@ stock get_color_level(id, num)
 	
 	return color[num];
 }
-/*
-stock fm_get_user_weapon(id, &clip=0, &ammo=0)
-{
-	static ent
-	ent = get_pdata_cbase(id, 373, LINUX_EXTRAOFFSET)
-	
-	if (!pev_valid(ent)) return -1;
-	
-	new wpnid
-	wpnid = fm_cs_get_weapon_id(ent)
-	clip = fm_cs_get_weapon_ammo(ent)
-	if (wpnid != CSW_KNIFE) ammo = fm_cs_get_user_bpammo(id, wpnid)
-	
-	return wpnid;
-}
-*/
 stock client_printc(index, const text[], any:...)
 {
 	new szMsg[128];
@@ -2915,49 +2787,6 @@ stock is_hull_vacant(Float:origin[3], hull)
 	return false;
 }
 
-// Drop primary/secondary weapons
-/*
-stock drop_weapons(id, dropwhat)
-{
-	// Get user weapons
-	static weapons[32], num, i, weaponid
-	num = 0 // reset passed weapons count (bugfix)
-	get_user_weapons(id, weapons, num)
-	
-	// Loop through them and drop primaries or secondaries
-	for (i = 0; i < num; i++)
-	{
-		// Prevent re-indexing the array
-		weaponid = weapons[i]
-		
-		if ((dropwhat == 1 && ((1<<weaponid) & PRIMARY_WEAPONS_BIT_SUM)) || (dropwhat == 2 && ((1<<weaponid) & SECONDARY_WEAPONS_BIT_SUM)))
-		{
-			// Get weapon entity
-			static wname[32], weapon_ent
-			get_weaponname(weaponid, wname, charsmax(wname))
-			weapon_ent = find_ent_by_owner(-1, wname, id)
-			
-			// Hack: store weapon bpammo on PEV_ADDITIONAL_AMMO
-			set_pev(weapon_ent, pev_iuser1, fm_cs_get_user_bpammo(id, weaponid))
-			
-			// Player drops the weapon and looses his bpammo
-			engclient_cmd(id, "drop", wname)
-			fm_cs_set_user_bpammo(id, weaponid, 0)
-		}
-	}
-}
-
-stock fm_cs_get_user_bpammo(client, weapon)
-{
-	return get_pdata_int(client, _CSW_to_offset[weapon], LINUX_EXTRAOFFSET);
-}
-
-stock fm_cs_set_user_bpammo(client, weapon, ammo)
-{
-	set_pdata_int(client, _CSW_to_offset[weapon], ammo, LINUX_EXTRAOFFSET);
-}
-*/
-
 public set_team(id, {PlayerTeams,_}:team)
 {
 	if(!is_user_connected(id))
@@ -3075,7 +2904,6 @@ stock fm_user_team_update(id)
 stock bool:TerminateRound({PlayerTeams,_}:team)
 {
 	new winStatus
-	//new event
 	new sound[64]
 	
 	switch(team)
@@ -3083,27 +2911,23 @@ stock bool:TerminateRound({PlayerTeams,_}:team)
 	case TEAM_ZOMBIE:
 	{
 		winStatus         = WinStatus_Zombie
-		//event             = ROUND_VIP_NOT_ESCAPED
 		g_TeamScore[TEAM_ZOMBIE]++
 		ArrayGetString(sound_win_zombie, get_random_array(sound_win_zombie), sound, sizeof(sound))
 	}
 	case TEAM_HUMAN:
 	{
 		winStatus         = WinStatus_Human
-		//event             = ROUND_TARGET_SAVED
 		g_TeamScore[TEAM_HUMAN]++
 		ArrayGetString(sound_win_human, get_random_array(sound_win_human), sound, sizeof(sound))
 	}
 	case TEAM_ALL:
 	{
 		winStatus         = WinStatus_RoundDraw
-		//event             = ROUND_NONE
 		sound             = "radio/rounddraw.wav"
 	}
 	case TEAM_START:
 	{
 		winStatus         = WinStatus_RoundDraw
-		//event             = ROUND_NONE
 	}
 	default:
 	{
@@ -3130,8 +2954,6 @@ stock bool:TerminateRound({PlayerTeams,_}:team)
 // ================================================================
 public load_config_file()
 {
-	//static buffer[128]
-	
 	// GamePlay Configs
 	g_free_gun = amx_load_setting_int(SETTING_FILE, "Config Value", "FREE_ITEMS", countdown_time)
 	countdown_time = amx_load_setting_int(SETTING_FILE, "Config Value", "COUNTDOWN_TIME", countdown_time)
@@ -3191,15 +3013,6 @@ public load_config_file()
 	g_kbDamage  = amx_load_setting_int(SETTING_FILE, "Knockback Power for Weapons", "KB_DAMAGE", g_kbDamage)
 	g_kbPower   = amx_load_setting_int(SETTING_FILE, "Knockback Power for Weapons", "KB_POWER", g_kbPower)
 	g_kbZVel    = amx_load_setting_int(SETTING_FILE, "Knockback Power for Weapons", "KB_ZVEL", g_kbZVel)
-	/*
-	for(new i = 1; i < sizeof WEAPONENTNAMES; i++)
-	{
-		if (!strlen(WEAPONENTNAMES[i])) continue;
-		
-		format(buffer, charsmax(buffer), "%s", WEAPONENTNAMES[i])
-		strtoupper(buffer)
-		amx_load_setting_float(SETTING_FILE, "Knockback Power for Weapons", buffer, g_kbWpnPower[i])
-	}*/
 	
 	// Load Human Models
 	amx_load_setting_string_arr(SETTING_FILE, "Config Value", "PLAYER_MODEL_MALE", human_model_male)
@@ -3218,11 +3031,6 @@ public load_config_file()
 	
 	amx_load_setting_string_arr(SETTING_FILE, "Sounds", "MALE_DEATH", sound_infect_male)
 	amx_load_setting_string_arr(SETTING_FILE, "Sounds", "FEMALE_DEATH", sound_infect_female)
-	/*
-	amx_load_setting_string_arr(SETTING_FILE, "Sounds", "ZOMBIE_ATTACK", sound_zombie_attack)
-	amx_load_setting_string_arr(SETTING_FILE, "Sounds", "ZOMBIE_HITWALL", sound_zombie_hitwall)
-	amx_load_setting_string_arr(SETTING_FILE, "Sounds", "ZOMBIE_SWING", sound_zombie_swing)
-	*/
 	amx_load_setting_string(SETTING_FILE, "Sounds", "AMBIENCE", sound_ambience, sizeof(sound_ambience))
 	amx_load_setting_string(SETTING_FILE, "Sounds", "HUMAN_LEVELUP", sound_human_levelup, sizeof(sound_human_levelup))	
 	// Restore Health Config
