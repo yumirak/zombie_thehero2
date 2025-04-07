@@ -57,11 +57,12 @@ new g_firstzombie , countdown_time , zombie_level2_health, zombie_level2_armor, 
 zombie_minhealth, zombie_minarmor,
 g_zombieorigin_defaultlevel, grenade_default_power, human_health, human_armor,
 g_respawn_time, g_respawn_icon[64], g_respawn_iconid, g_health_reduce_percent
+new g_sound_game_count
 
 // Arrays
 new Array:human_model_male, Array:human_model_female, Array:hero_model_male, Array:hero_model_female,
 Array:sound_infect_male, Array:sound_infect_female
-new Array:sound_game_start, sound_game_count[64], Array:sound_win_human, Array:sound_win_zombie,
+new Array:sound_game_start, sound_game_count_file[64], Array:sound_win_human, Array:sound_win_zombie,
 Array:sound_zombie_coming, Array:sound_zombie_comeback, sound_ambience[64], sound_human_levelup[64],
 sound_remain_time[64]
 
@@ -384,7 +385,7 @@ public plugin_precache()
 	// Load Configs File
 	load_config_file()
 
-	new szBuffer[128], buffer[128], sound_count[10], i
+	new szBuffer[128], buffer[128], i
 	
 	// Precache Human Models
 	for (i = 0; i < ArraySize(human_model_male); i++)
@@ -443,10 +444,11 @@ public plugin_precache()
 		engfunc(EngFunc_PrecacheSound, buffer)
 	}	
 
-	for (new i = 1; i <= sizeof(sound_count); i++)
+	for (new i = 1; i <= g_sound_game_count; i++)
 	{
-		format(sound_count, sizeof sound_count - 1, sound_game_count, i)
-		engfunc(EngFunc_PrecacheSound, sound_count)
+		formatex(szBuffer, sizeof(szBuffer), sound_game_count_file, i)
+		engfunc(EngFunc_PrecacheSound, szBuffer)
+		client_print(0, print_console, "%s", szBuffer )
 	}	
 	for (i = 0; i < ArraySize(sound_win_zombie); i++)
 	{
@@ -2060,7 +2062,7 @@ public counting_down()
 	if(g_countdown_count <= 10)
 	{
 		static sound[64]
-		format(sound, charsmax(sound), sound_game_count, g_countdown_count)
+		format(sound, charsmax(sound), sound_game_count_file, g_countdown_count)
 		
 		PlaySound(0, sound)
 	}
@@ -3019,8 +3021,9 @@ public load_config_file()
 	amx_load_setting_string_arr(SETTING_FILE, "Config Value", "PLAYER_MODEL_FEMALE", human_model_female)
 	
 	// Load Sounds
+	g_sound_game_count = amx_load_setting_int(SETTING_FILE, "Sounds", "ZOMBIE_COUNT", g_sound_game_count)
 	amx_load_setting_string_arr(SETTING_FILE, "Sounds", "ZOMBIE_START", sound_game_start)
-	amx_load_setting_string(SETTING_FILE, "Sounds", "ZOMBIE_COUNT", sound_game_count, sizeof(sound_game_count))
+	amx_load_setting_string(SETTING_FILE, "Sounds", "ZOMBIE_COUNT_FILE", sound_game_count_file, sizeof(sound_game_count_file))
 	amx_load_setting_string(SETTING_FILE, "Sounds", "REMAINING_TIME", sound_remain_time, sizeof(sound_remain_time))
 	
 	amx_load_setting_string_arr(SETTING_FILE, "Sounds", "ZOMBIE_COMING", sound_zombie_coming)
