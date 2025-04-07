@@ -291,6 +291,7 @@ public zb3_user_spawned(id)
 	if(!is_user_connected(id))
 		return HAM_IGNORED
 		
+	zb3_hide_user_statusicon(id)
 	set_wing_boot(id)
 	set_double_grenade(id)
 	set_user_item_sprint(id)
@@ -299,6 +300,7 @@ public zb3_user_spawned(id)
 	set_user_bloodyblade(id)
 	set_user_nightvision(id)
 	
+	zb3_show_user_statusicon(id, 1) // 1.5 Ammo
 	return HAM_HANDLED
 }
 
@@ -326,6 +328,8 @@ public set_wing_boot(id)
 		return			
 	if(!g_had_wing_boot[id])
 		return
+
+	zb3_show_user_statusicon(id, 3)
 		
 	set_pev(id, pev_gravity, g_wb_gravity)
 }
@@ -497,6 +501,7 @@ public set_p30_damage(id)
 	if(!g_had_p30_damage[id])
 		return	
 		
+	zb3_show_user_statusicon(id, 13)
 	zb3_set_user_maxlevel(id, 13)
 	zb3_set_user_level(id, zb3_get_user_level(id) + 3)
 }

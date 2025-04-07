@@ -212,6 +212,9 @@ native zb3_set_user_gravity(id, Float:fGravity);
 native zb3_reset_user_gravity(id);
 
 native zb3_get_freeitem_status();
+
+native zb3_show_user_statusicon(id, idspr);
+native zb3_hide_user_statusicon(id);
 // End New Natives
 
 // Forwards

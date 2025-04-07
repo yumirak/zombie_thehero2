@@ -125,12 +125,27 @@ public zb3_item_selected_post(id, itemid)
 		zb3_set_user_infect_mod(id, 70)
 	}
 }
+public zb3_user_dead(id)
+{
+	if(!is_user_connected(id) || !zb3_get_user_zombie(id) )
+		return
+	zb3_hide_user_statusicon(id)
+}
 
 public zb3_user_infected(id)
 {
 	if(!g_x_health_armor_used[id])
 		x_health_armor_handle(id)
 	zombie_grenade_handle(id)
+
+	zb3_hide_user_statusicon(id)
+
+	if( g_had_im_respawn[id] )
+		zb3_show_user_statusicon(id, 14)
+	if( g_had_x_health_armor[id] )
+		zb3_show_user_statusicon(id, 2)
+	if( g_had_70_infect[id] )
+		zb3_show_user_statusicon(id, 4)
 }
 
 public zb3_zombie_evolution(id, level)
@@ -184,7 +199,7 @@ public client_PostThink(id)
 		return
 	if(!zb3_get_user_zombie(id))
 		return
-		
+
 	static Float:CurTime
 	CurTime = get_gametime()
 	
