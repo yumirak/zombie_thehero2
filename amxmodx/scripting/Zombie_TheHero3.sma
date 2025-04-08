@@ -16,9 +16,6 @@
 
 // #define _DEBUG
 
-#define GAMENAME "Zombie: The Hero"
-#define GAMESYSTEMNAME "zombie_thehero"
-
 // Configs
 new const SETTING_FILE[] = "zombie_thehero/config.ini"
 new const CVAR_FILE[] = "zombie_thehero/zth_autoexec.cfg"
@@ -43,8 +40,8 @@ new Float:g_PlayerMaxSpeed[33]
 #define TASK_NOTICE 52005
 
 #define MAX_FORWARD 10
-
 #define MAX_SYNCHUD 6
+#define MAX_RETRY 33
 // Game Vars
 new g_game_playable, g_MaxPlayers, g_TeamScore[PlayerTeams], 
 g_Forwards[MAX_FORWARD], g_gamestart, g_endround, g_WinText[PlayerTeams][64], g_countdown_count,
@@ -73,12 +70,6 @@ Array:zombie_sound_hurt2, Array:zombie_clawsmodel_host, Array:zombie_clawsmodel_
 Array:zombie_sound_attack1, Array:zombie_sound_swing1, Array:zombie_sound_hitwall1, Array:zombie_sound_stab1
 	
 new Array:zombie_sound_heal, Array:zombie_sound_evolution
-
-// Spawn Point Research
-#define MAX_SPAWN_POINT 100
-#define MAX_RETRY 33
-new Float:player_spawn_point[MAX_SPAWN_POINT][3]
-new player_spawn_point_count
 	
 // - Weather & Sky & NVG
 new g_rain, g_snow, g_fog, g_fog_density[10], g_fog_color[12]
@@ -550,9 +541,6 @@ public plugin_natives()
 }
 public plugin_cfg()
 {
-	// Scan Map
-	research_map()	
-	
 	new cfgdir[32]
 	get_configsdir(cfgdir, charsmax(cfgdir))
 	
@@ -582,66 +570,6 @@ public fw_BlockedObj_Spawn(ent)
 	
 	return FMRES_IGNORED
 }
-// Zombie Plague
-public research_map()
-{
-	new cfgdir[32], mapname[32], filepath[100], linedata[64]
-	get_configsdir(cfgdir, charsmax(cfgdir))
-	get_mapname(mapname, charsmax(mapname))
-	formatex(filepath, charsmax(filepath), "%s/%s/csdm/%s.spawns.cfg", cfgdir, GAMESYSTEMNAME , mapname)
-	
-	// Load CSDM spawns if present
-	if (file_exists(filepath))
-	{
-		new csdmdata[3][6], file = fopen(filepath,"rt")
-		
-		while (file && !feof(file))
-		{
-			fgets(file, linedata, charsmax(linedata))
-			
-			// invalid spawn
-			if(!linedata[0] || str_count(linedata,' ') < 2) continue;
-			
-			// get spawn point data
-			parse(linedata,csdmdata[0],5,csdmdata[1],5,csdmdata[2],5)
-			
-			// origin
-			player_spawn_point[player_spawn_point_count][0] = floatstr(csdmdata[0])
-			player_spawn_point[player_spawn_point_count][1] = floatstr(csdmdata[1])
-			player_spawn_point[player_spawn_point_count][2] = floatstr(csdmdata[2])
-			
-			// increase spawn count
-			player_spawn_point_count++
-			//g_spawnCount++
-			if (player_spawn_point_count >= sizeof player_spawn_point) break;
-		}
-		if (file) fclose(file)
-	}
-	else
-	{
-		// Collect regular spawns
-		collect_spawns_ent("info_player_start")
-		collect_spawns_ent("info_player_deathmatch")
-	}
-}
-// Collect spawn points from entity origins
-stock collect_spawns_ent(const classname[])
-{
-	new ent = -1
-	while ((ent = engfunc(EngFunc_FindEntityByString, ent, "classname", classname)) != 0)
-	{
-		// get origin
-		new Float:originF[3]
-		pev(ent, pev_origin, originF)
-		player_spawn_point[player_spawn_point_count][0] = originF[0]
-		player_spawn_point[player_spawn_point_count][1] = originF[1]
-		player_spawn_point[player_spawn_point_count][2] = originF[2]
-		
-		// increase spawn count
-		player_spawn_point_count++
-		if (player_spawn_point_count >= sizeof player_spawn_point) break;
-	}
-}
 public do_random_spawn(id, retry_count)
 {
 	if(!pev_valid(id))
@@ -650,10 +578,10 @@ public do_random_spawn(id, retry_count)
 	static hull, Float:Origin[3], random_mem
 	hull = (pev(id, pev_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN
 	
-	random_mem = random_num(0, player_spawn_point_count - 1)
-	Origin[0] = player_spawn_point[random_mem][0]
-	Origin[1] = player_spawn_point[random_mem][1]
-	Origin[2] = player_spawn_point[random_mem][2]
+	random_mem = random_num(0, zb3_get_player_spawn_count() - 1)
+	Origin[0] = zb3_get_player_spawn_cord(random_mem, 0)
+	Origin[1] = zb3_get_player_spawn_cord(random_mem, 1)
+	Origin[2] = zb3_get_player_spawn_cord(random_mem, 2)
 	
 	if(is_hull_vacant(Origin, hull))
 	{
@@ -3470,17 +3398,4 @@ public amx_load_setting_string(const filename[], const setting_section[], settin
 	// Key not found
 	fclose(file)
 	return false;
-}
-// Stock by (probably) Twilight Suzuka -counts number of chars in a string
-stock str_count(const str[], searchchar)
-{
-	new count, i, len = strlen(str)
-	
-	for (i = 0; i <= len; i++)
-	{
-		if(str[i] == searchchar)
-			count++
-	}
-	
-	return count;
 }

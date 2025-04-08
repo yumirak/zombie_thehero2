@@ -3,6 +3,14 @@
 	-*- Zombie: The Hero III - Native -*-
 	---------------------------------------
 ###################################################### */ 
+#if defined _zb3_included
+#endinput
+#endif
+
+#define _zb3_included
+
+#define GAMENAME "Zombie: The Hero"
+#define GAMESYSTEMNAME "zombie_thehero"
 
 // Enum
 enum PlayerTeams
@@ -215,6 +223,11 @@ native zb3_get_freeitem_status();
 
 native zb3_show_user_statusicon(id, idspr);
 native zb3_hide_user_statusicon(id);
+
+native Float:zb3_get_player_spawn_cord( num, type );
+native zb3_get_player_spawn_count();
+native zb3_set_player_spawn_used( num, bool:status );
+native zb3_get_player_spawn_used( num );
 // End New Natives
 
 // Forwards

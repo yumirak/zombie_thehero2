@@ -30,10 +30,7 @@ bool:made_supplybox, g_newround, g_endround
 new g_maxplayers, g_msgHostagePos , g_msgHostageK
 
 // Spawn Point Research
-#define MAX_SPAWN_POINT 40
 #define MAX_RETRY 40
-new Float:player_spawn_point[MAX_SPAWN_POINT][4]
-new player_spawn_point_count
 new g_Forwards, g_dummy_forward
 
 public plugin_init()
@@ -59,71 +56,6 @@ public plugin_precache()
 	
 }
 
-public plugin_cfg()
-{
-	research_map()
-}
-
-
-public research_map()
-{
-	new cfgdir[32], mapname[32], filepath[100], linedata[64]
-	get_configsdir(cfgdir, charsmax(cfgdir))
-	get_mapname(mapname, charsmax(mapname))
-	formatex(filepath, charsmax(filepath), "%s/zombie_thehero/csdm/%s.spawns.cfg", cfgdir, mapname)
-	
-	// Load CSDM spawns if present
-	if (file_exists(filepath))
-	{
-		new csdmdata[10][6], file = fopen(filepath,"rt")
-		
-		while (file && !feof(file))
-		{
-			fgets(file, linedata, charsmax(linedata))
-			
-			// invalid spawn
-			if(!linedata[0] || str_count(linedata,' ') < 2) continue;
-			
-			// get spawn point data
-			parse(linedata,csdmdata[0],5,csdmdata[1],5,csdmdata[2],5,csdmdata[3],5,csdmdata[4],5,csdmdata[5],5,csdmdata[6],5,csdmdata[7],5,csdmdata[8],5,csdmdata[9],5)
-			
-			// origin
-			player_spawn_point[player_spawn_point_count][0] = floatstr(csdmdata[0])
-			player_spawn_point[player_spawn_point_count][1] = floatstr(csdmdata[1])
-			player_spawn_point[player_spawn_point_count][2] = floatstr(csdmdata[2])
-			player_spawn_point[player_spawn_point_count][3] = 0.0
-			// increase spawn count
-			player_spawn_point_count++
-			//g_spawnCount++
-			if (player_spawn_point_count >= sizeof player_spawn_point) break;
-		}
-		if (file) fclose(file)
-	}
-	else
-	{
-		// Collect regular spawns
-		collect_spawns_ent("info_player_start")
-		collect_spawns_ent("info_player_deathmatch")
-	}
-}
-// Collect spawn points from entity origins
-stock collect_spawns_ent(const classname[])
-{
-	new ent = -1
-	while ((ent = engfunc(EngFunc_FindEntityByString, ent, "classname", classname)) != 0)
-	{
-		// get origin
-		new Float:originF[3]
-		pev(ent, pev_origin, originF)
-		player_spawn_point[player_spawn_point_count][0] = originF[0]
-		player_spawn_point[player_spawn_point_count][1] = originF[1]
-		player_spawn_point[player_spawn_point_count][2] = originF[2]
-		player_spawn_point[player_spawn_point_count][3] = 0.0
-		// increase spawn count
-		player_spawn_point_count++
-		if (player_spawn_point_count >= sizeof player_spawn_point) break;
-	}
-}
 public radar_scan()
 {	
 	for (new id = 1; id < g_maxplayers; id++)
@@ -203,8 +135,8 @@ public remove_supplybox()
 	
 	for (new i = 0; i < SUPPLYBOX_MAX; i++)
 		supplybox_ent[i] = 0
-	for (new i = 1; i < player_spawn_point_count; i++)
-		player_spawn_point[i][3] = 0.0
+	for (new i = 1; i < zb3_get_player_spawn_count(); i++)
+		zb3_set_player_spawn_used(i, false)
 }
 
 public create_supplybox()
@@ -279,7 +211,7 @@ public fw_Touch_SupplyBox(ent, id)
 	new num_box = entity_get_int(ent, EV_INT_iuser2)
 	new spawn_num_used = entity_get_int(ent, EV_INT_iuser1)
 
-	player_spawn_point[spawn_num_used][3] = 0.0 // reset used origin
+	zb3_set_player_spawn_used(spawn_num_used, false) // reset used origin
 	supplybox_ent[num_box] = 0 
 	supplybox_count--
 
@@ -294,16 +226,16 @@ public do_random_spawn(id, retry_count)
 	static hull, Float:Origin[3], random_mem
 	hull = (pev(id, pev_flags) & FL_DUCKING) ? HULL_HEAD : HULL_HUMAN
 	
-	random_mem = random_num(0, player_spawn_point_count - 1)
+	random_mem = random_num(0, zb3_get_player_spawn_count() - 1)
 
-	Origin[0] = player_spawn_point[random_mem][0]
-	Origin[1] = player_spawn_point[random_mem][1]
-	Origin[2] = player_spawn_point[random_mem][2] //- 40.0
+	Origin[0] = zb3_get_player_spawn_cord(random_mem, 0)
+	Origin[1] = zb3_get_player_spawn_cord(random_mem, 1)
+	Origin[2] = zb3_get_player_spawn_cord(random_mem, 2)
 	
-	if(is_hull_vacant(Origin, hull) && player_spawn_point[random_mem][3] == 0.0)
+	if(is_hull_vacant(Origin, hull) && !zb3_get_player_spawn_used(random_mem) )
 	{
 		engfunc(EngFunc_SetOrigin, id, Origin)
-		player_spawn_point[random_mem][3] = 1.0
+		zb3_set_player_spawn_used(random_mem, true)
 		entity_set_int(id, EV_INT_iuser1, random_mem)
 	}
 	else
@@ -337,16 +269,4 @@ stock normalize(Float:fIn[3], Float:fOut[3], Float:fMul) // By sontung0
 	fOut[0] /= fLen, fOut[1] /= fLen, fOut[2] /= fLen
 	fOut[0] *= fMul, fOut[1] *= fMul, fOut[2] *= fMul
 }
-// Stock by (probably) Twilight Suzuka -counts number of chars in a string
-stock str_count(const str[], searchchar)
-{
-	new count, i, len = strlen(str)
-	
-	for (i = 0; i <= len; i++)
-	{
-		if(str[i] == searchchar)
-			count++
-	}
-	
-	return count;
-}
+
