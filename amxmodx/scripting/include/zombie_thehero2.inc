@@ -103,6 +103,11 @@ enum
 }
 enum
 {
+	FWD_SUPPLY_ITEM_GIVE = 0,
+	FWD_SUPPLY_AMMO_GIVE
+}
+enum
+{
 	WPN_BOUGHT = 0,
 	WPN_REMOVE,
 	WPN_ADDAMMO,
@@ -250,4 +255,5 @@ forward zb3_weapon_selected_post(id, weaponid);
 forward zb3_remove_weapon(id, weaponid);
 
 forward zb3_supply_item_give(id, weaponid);
+forward zb3_supply_refill_ammo(id, weaponid);
 forward zb3_touch_supply(id);
