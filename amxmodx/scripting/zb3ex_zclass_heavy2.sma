@@ -1,7 +1,7 @@
 #include <amxmodx>
 #include <fakemeta>
 #include <hamsandwich>
-#include <engine>
+#include <reapi>
 #include <xs>
 #include <zombie_thehero2>
 
@@ -61,7 +61,7 @@ new g_zombie_classid, g_can_set_trap[33], g_current_time[33]
 
 #define TASK_COOLDOWN 12001
 
-const MAX_TRAP = 30
+const MAX_TRAP = 10
 new const trap_classname[] = "zb_trap"
 new const TrapSlow[] = "sprites/zombie_thehero/zbt_slow.spr"
 new const model_trap[] = "models/zombie_thehero/zombitrap.mdl"
@@ -69,7 +69,7 @@ new const sound_trapsetup[] = "zombie_thehero/zombi_trapsetup.wav"
 new const sound_trapped[] = "zombie_thehero/zombi_trapped.wav"
 // Vars
 new g_total_traps[33], g_msgScreenShake, g_player_trapped[33]
-new TrapOrigins[33][MAX_TRAP][4]
+new TrapEnt[33][MAX_TRAP]
 
 // Task offsets
 enum (+= 100)
@@ -118,14 +118,17 @@ public plugin_precache()
 	engfunc(EngFunc_PrecacheModel, TrapSlow)
 }
 
+public zb3_user_spawned(id)
+{
+	if( g_player_trapped[id] )
+		g_player_trapped[id] = 0
+}
+
 public zb3_user_infected(id, infector)
 {
 	if(zb3_get_user_zombie_class(id) == g_zombie_classid)
 	{
 		reset_skill(id)
-		
-		g_can_set_trap[id] = 1
-		//g_total_traps[id] = 0
 		g_current_time[id] = zb3_get_user_level(id) > 1 ? (TRAP_SKILL_COOLDOWN_ORIGIN) : (TRAP_SKILL_COOLDOWN_HOST)
 	}
 }
@@ -134,22 +137,27 @@ public reset_skill(id)
 {
 	if (task_exists(id+TASK_REMOVETRAP)) remove_task(id+TASK_REMOVETRAP)
 
-	g_player_trapped[id] = 0
-	g_can_set_trap[id] = 0
-	//g_total_traps[id] = 0
-	//remove_trap(id)
-	//if(g_total_traps[id]) remove_traps_player(id)
-	remove_traps_player(id) // g_total_traps[id] = 0
+	if (g_total_traps[id]) remove_traps_player(id)
 }
 public zb3_user_dead(id) 
 {
 	reset_skill(id)
-	//if(g_total_traps[id]) remove_traps_player(id)
 }
 
 public zb3_game_start(start_type)
 {
-	if(start_type == GAMESTART_NEWROUND) remove_traps()
+	if(start_type == GAMESTART_NEWROUND)
+	{
+		for (new i = 0; i <= MAX_PLAYERS; i++)
+		{
+			if ( !is_user_alive(i))
+				continue
+			remove_traps_player(i)
+			g_player_trapped[i] = 0
+		}
+	}
+
+	remove_traps()
 }
 
 public cmd_drop(id)
@@ -163,11 +171,8 @@ public cmd_drop(id)
 	if(!g_can_set_trap[id])
 		return PLUGIN_HANDLED
 
-	if (g_total_traps[id] )
-	{
-		client_print(id, print_center,"Current trap deployed max : %i) ", g_total_traps[id])
-		return PLUGIN_HANDLED
-	}	
+	if(g_total_traps[id])
+		remove_traps_player(id)
 
 	Do_Trap(id)
 
@@ -195,8 +200,6 @@ public fw_PlayerPreThink(id)
 		return;
 
 	new ent_trap = g_player_trapped[id]
-	//static Float:vecVelocity[3]
-	
 	if(!pev_valid(ent_trap))
 	{
 		if (task_exists(id+TASK_REMOVETRAP)) remove_task(id+TASK_REMOVETRAP)
@@ -212,10 +215,8 @@ public fw_PlayerPreThink(id)
 			RemoveTrap(id+TASK_REMOVETRAP)
 			return;
 		}
-		//pev(id, pev_velocity, vecVelocity);
-		//xs_vec_mul_scalar(vecVelocity, 0.1, vecVelocity);
-		set_pev(id, pev_velocity, {0.0,0.0,0.0});
-		//zb3_set_user_speed(id, 1) // set player speed
+
+		zb3_set_user_speed(id, 1)
 
 		switch(pev(ent_trap, pev_sequence)) // trap animation
 		{
@@ -269,7 +270,6 @@ Trapped(id, ent_trap)
 
 	// reset invisible model trapped
 	fm_set_rendering(ent_trap)
-	zb3_showattachment(id, TrapSlow, TRAP_TIME_EFFECT, 1.0, 1.0, 0)
 	
 	// set task remove trap
 	if (task_exists(id+TASK_REMOVETRAP)) remove_task(id+TASK_REMOVETRAP)
@@ -290,12 +290,9 @@ remove_trapped_when_infected(id)
 	if (p_trapped)
 	{
 		// remove trap
-		//if (pev_valid(p_trapped)) engfunc(EngFunc_RemoveEntity, p_trapped)
-		//zb3_reset_user_speed(id)
-		// reset value of player
+		remove_traps_player( pev(p_trapped, pev_owner) , p_trapped )
 		g_player_trapped[id] = 0
-		//g_total_traps[id] -= 1
-		remove_traps_player(pev(p_trapped, pev_owner) )
+		zb3_reset_user_speed(id)
 	}
 }
 create_trap(id)
@@ -334,11 +331,8 @@ create_trap(id)
 	fm_set_rendering(ent,kRenderFxNone,0,0,0,kRenderTransAlpha, TRAP_INVISIBLE)
 	
 	// trap counter
-	g_total_traps[id] += 1
-	TrapOrigins[id][g_total_traps[id]][0] = ent
-	TrapOrigins[id][g_total_traps[id]][1] = FloatToNum(origin[0])
-	TrapOrigins[id][g_total_traps[id]][2] = FloatToNum(origin[1])
-	TrapOrigins[id][g_total_traps[id]][3] = FloatToNum(origin[2])
+	g_total_traps[id]++
+	TrapEnt[id][g_total_traps[id]] = ent
 	
 	return -1;
 }
@@ -358,49 +352,45 @@ fm_set_rendering(entity, fx = kRenderFxNone, r = 255, g = 255, b = 255, render =
 	return 1;
 }
 
-FloatToNum(Float:floatn)
+remove_traps_player(id, ent = 0)
 {
-	new str[64], num
-	float_to_str(floatn, str, 63)
-	num = str_to_num(str)
-	
-	return num
-}
+	if( ent )
+	{
+		if (pev_valid(ent))
+		{
+			engfunc(EngFunc_RemoveEntity, ent)
+			g_total_traps[id]--
+		}
+		return
+	}
 
+	new iTotalTrap = g_total_traps[id]
+	for (new i = 1; i <= iTotalTrap; i++)
+	{
+		new trap_ent = TrapEnt[id][i]
+
+		if (pev_valid(trap_ent))
+		{
+			engfunc(EngFunc_RemoveEntity, trap_ent)
+			g_total_traps[id]--
+		}
+	}
+	
+}
 
 remove_traps()
 {
-	// reset model
-	new nextitem  = find_ent_by_class(-1, trap_classname)
-	while(nextitem)
+	for (new i = 0; i <= MAX_TRAP; i++)
 	{
-		if (pev_valid(nextitem)) remove_entity(nextitem)
-		nextitem = find_ent_by_class(-1, trap_classname)
+		new trap_ent = rg_find_ent_by_class(-1, trap_classname)
+
+		if (pev_valid(trap_ent))
+		{
+			engfunc(EngFunc_RemoveEntity, trap_ent)
+		}
 	}
 }
 
-remove_traps_player(id)
-{
-	// remove model trap in map
-	//for (new i = g_total_traps[id]; i <= MAX_TRAP; i++)
-	//{
-	new trap_ent = TrapOrigins[id][1][0]
-	if (pev_valid(trap_ent)) engfunc(EngFunc_RemoveEntity, trap_ent)
-	g_total_traps[id] = 0
-	//}
-	
-}
-/*
-remove_traps_player(id)
-{
-	// remove model trap in map
-	for (new i = 1; i <= g_total_traps[id]; i++)
-	{
-		new trap_ent = TrapOrigins[id][i][0]
-		if (pev_valid(trap_ent)) engfunc(EngFunc_RemoveEntity, trap_ent)
-	}
-	
-}*/
 user_screen_shake(id, amplitude = 4, duration = 2, frequency = 10)
 {
 	message_begin(MSG_ONE_UNRELIABLE, g_msgScreenShake, _, id)
