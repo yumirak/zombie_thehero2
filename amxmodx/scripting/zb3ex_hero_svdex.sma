@@ -15,7 +15,7 @@
 #include <xs>
 
 
-#define _DEBUG_CMD "say /svdex"
+// #define _DEBUG_CMD "say /svdex"
 
 #define PLUGIN "[ZB3] Hero: SVDEX"
 #define VERSION "1.3"
@@ -366,7 +366,9 @@ public plugin_precache()
 	g_iSteamSpr = PRECACHE_MODEL(STEAM_SPR);
 	register_message(MSG_WEAPONLIST, "MsgHook_WeaponList");
 	register_message(get_user_msgid("DeathMsg"), "MsgHook_Death");
+#if defined _DEBUG_CMD
 	register_clcmd(_DEBUG_CMD, "Cmd_WeaponGive");
+#endif
 	register_clcmd(WEAPON_NAME, "Cmd_WeaponSelect");
 
 }

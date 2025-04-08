@@ -13,7 +13,7 @@
 #include <xs>
 
 
-#define _DEBUG_CMD "say /ak47long"
+// #define _DEBUG_CMD "say /ak47long"
 
 #define PLUGIN "[ZB3] Supply: CV-47 60R"
 #define VERSION "1.3"
@@ -327,7 +327,9 @@ public plugin_precache()
 	
 	register_message(MSG_WEAPONLIST, "MsgHook_WeaponList");
 	register_message(get_user_msgid("DeathMsg"), "MsgHook_Death");
+#if defined _DEBUG_CMD
 	register_clcmd(_DEBUG_CMD, "Cmd_WeaponGive");
+#endif
 	register_clcmd(WEAPON_NAME, "Cmd_WeaponSelect");
 
 }

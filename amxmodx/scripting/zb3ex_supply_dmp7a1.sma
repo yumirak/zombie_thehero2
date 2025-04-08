@@ -12,7 +12,7 @@
 #include <zombie_thehero2>
 #include <xs>
 
-#define _DEBUG_CMD "say /dmp7a1"
+// #define _DEBUG_CMD "say /dmp7a1"
 
 #define PLUGIN "[ZB3] Supply: Dual MP7A1"
 #define VERSION "1.3"
@@ -342,7 +342,9 @@ public plugin_precache()
 	
 	register_message(MSG_WEAPONLIST, "MsgHook_WeaponList");
 	register_message(get_user_msgid("DeathMsg"), "MsgHook_Death");
+	#if defined _DEBUG_CMD
 	register_clcmd(_DEBUG_CMD, "Cmd_WeaponGive");
+	#endif
 	#if defined WEAPONLIST
 	register_clcmd(WEAPON_NAME, "Cmd_WeaponSelect");
 	#endif
