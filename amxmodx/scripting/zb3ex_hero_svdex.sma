@@ -35,6 +35,7 @@
 
 #define WEAPON_MAX_CLIP			20
 #define WEAPON_DEFAULT_AMMO		240
+#define WEAPON_MAX_SUPERBULLET	10
 
 #define WEAPON_MAX_SPEED		240.0
 #define WEAPON_GRENADE_DAMAGE	1000.0
@@ -888,7 +889,7 @@ Weapon_Create(const Float: vecOrigin[3] = {0.0, 0.0, 0.0}, const Float: vecAngle
 	SET_ORIGIN(iWeapon, vecOrigin);
 	
 	set_pdata_int(iWeapon, m_iClip, WEAPON_MAX_CLIP, extra_offset_weapon);
-	set_pdata_int(iWeapon, m_fInSuperBullets , 10 , extra_offset_weapon);
+	RefillSuperBullet( iWeapon );
 	set_pev(iWeapon, pev_impulse, g_iszWeaponKey);
 	set_pev(iWeapon, pev_angles, vecAngles);
 	
@@ -1175,4 +1176,18 @@ SetAmmoInventory(const iPlayer, const iAmmoIndex, const iAmount)
 
 	set_pdata_int(iPlayer, m_rgAmmo_CBasePlayer + iAmmoIndex, iAmount, extra_offset_player);
 	return 1;
+}
+public zb3_supply_refill_ammo(iPlayer)
+{
+	new iItem = find_ent_by_owner(-1, WEAPON_REFERANCE, iPlayer);
+
+	if (!IsValidPev(iItem) || !IsCustomItem(iItem))
+		return;
+
+	RefillSuperBullet(iItem);
+
+}
+RefillSuperBullet(const iItem)
+{
+	return set_pdata_int(iItem, m_fInSuperBullets, WEAPON_MAX_SUPERBULLET, extra_offset_weapon);
 }
