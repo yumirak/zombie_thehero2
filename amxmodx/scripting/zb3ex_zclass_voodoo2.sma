@@ -1,7 +1,6 @@
 #include <amxmodx>
 #include <engine>
 #include <fakemeta>
-#include <cstrike>
 #include <zombie_thehero2>
 
 #define PLUGIN "[ZB3EX] ZClass: Voodoo"
@@ -97,7 +96,7 @@ public plugin_precache()
 	// Precache Class Resource
 	engfunc(EngFunc_PrecacheSound, HealSound_Female)
 	engfunc(EngFunc_PrecacheSound, HealSkillSound)
-	
+
 	engfunc(EngFunc_PrecacheModel, HealerSpr)
 	engfunc(EngFunc_PrecacheModel, HealedSpr)
 }

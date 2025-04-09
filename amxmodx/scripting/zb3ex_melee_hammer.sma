@@ -3,7 +3,7 @@
 #include <fakemeta>
 #include <fakemeta_util>
 #include <hamsandwich>
-#include <cstrike>
+#include <reapi>
 #include <zombie_thehero2>
 #include <fun>
 
@@ -64,8 +64,6 @@ enum
 	HAMMER_ANIM_DRAWSTAB,
 	HAMMER_ANIM_MOVETO_SLASH
 }
-
-const m_szAnimExtention = 492
 
 #define TASK_CHANGING 42342
 #define TASK_ATTACKING 423423
@@ -159,7 +157,7 @@ public fw_TraceAttack(victim, attacker, Float:Damage, Float:direction[3], traceh
 {
 	if(!is_user_alive(victim) || !is_user_alive(attacker))
 		return HAM_IGNORED
-	if(cs_get_user_team(victim) == cs_get_user_team(attacker))
+	if (get_member(victim, m_iTeam) == get_member(attacker, m_iTeam))
 		return HAM_IGNORED	
 	if(get_user_weapon(attacker) != CSW_KNIFE || !g_had_hammer[attacker])
 		return HAM_IGNORED
@@ -449,8 +447,8 @@ public fw_Knife_SendAnim(ent, anim, skip_local)
 	if(!g_had_hammer[id])
 		return HAM_IGNORED
 	
-	set_pdata_string(id, m_szAnimExtention * 4, "knife", -1 , 20)
 		
+	set_member(id, m_szAnimExtention, "knife" );
 	switch(anim)
 	{
 		case KNIFE_ANIM_DRAW:

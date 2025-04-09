@@ -3,7 +3,6 @@
 #include <fakemeta>
 #include <fakemeta_util>
 #include <hamsandwich>
-#include <cstrike>
 #include <zombie_thehero2>
 
 #define PLUGIN "[ZB3EX] ZClass: Stamper"

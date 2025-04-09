@@ -1,7 +1,6 @@
 #include <amxmodx>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cstrike>
 #include <zombie_thehero2>
 
 #define PLUGIN "[ZB3EX] ZClass: Light"

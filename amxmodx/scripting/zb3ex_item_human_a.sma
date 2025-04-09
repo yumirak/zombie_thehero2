@@ -3,7 +3,7 @@
 #include <engine>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cstrike>
+#include <reapi>
 #include <fun>
 #include <zombie_thehero2>
 
@@ -362,7 +362,7 @@ public set_double_grenade(id)
 	g_doubled_grenade[id] = 1
 	give_item(id, "weapon_hegrenade")
 	
-	cs_set_user_bpammo(id, CSW_HEGRENADE, 2)
+	rg_set_user_bpammo(id, WEAPON_HEGRENADE, 2)
 }
 
 // ============ Item: Sprint
@@ -603,7 +603,7 @@ public fw_TraceAttack(victim, attacker, Float:damage, Float:direction[3], traceh
 {
 	if (victim == attacker || !is_user_alive(attacker) || !is_user_alive(victim))
 		return HAM_IGNORED;
-	if (cs_get_user_team(victim) == cs_get_user_team(attacker))
+	if (get_member(victim, m_iTeam) == get_member(attacker, m_iTeam))
 		return HAM_IGNORED
 		
 	if(g_using_bloodyblade[attacker] && get_user_weapon(attacker) == CSW_KNIFE)

@@ -12,7 +12,6 @@
 #include <amxmodx>
 #include <fakemeta>
 #include <hamsandwich>
-#include <cstrike>
 #include <reapi>
 
 #if defined _DEBUG
@@ -281,7 +280,7 @@ Weapon_OnSecondaryAttack(const iItem, const iPlayer, const iClip, const iAmmoPri
 	if(iClip <= 0 || get_pdata_float(iPlayer, m_flNextAttack, extra_offset_weapon) > 0.0)
 		return;
 
-	while(cs_get_weapon_ammo(iItem) > 0)
+	while(get_member(iItem, m_Weapon_iClip) > 0)
 		ExecuteHamB(Ham_Weapon_PrimaryAttack, iItem);
 		
 	set_pdata_float(iItem, m_flNextSecondaryAttack, 0.3, extra_offset_weapon);
@@ -333,7 +332,9 @@ new g_iForwardDecalIndex;
 public plugin_precache()
 {
 	Weapon_OnPrecache();
-	
+#if defined _DEBUG
+	ExtraItem_Register();
+#endif
 	g_iszWeaponKey = engfunc(EngFunc_AllocString, WEAPON_NAME);
 	g_iForwardDecalIndex = register_forward(FM_DecalIndex, "FakeMeta_DecalIndex_Post", true);
 	#if defined WPNLIST

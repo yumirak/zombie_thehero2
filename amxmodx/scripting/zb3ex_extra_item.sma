@@ -1,8 +1,5 @@
 #include <amxmodx>
-#include <cstrike>
-#include <hamsandwich>
-#include <fakemeta>
-//#include <fakemeta_util>
+#include <reapi>
 #include <zombie_thehero2>
 
 #define PLUGIN "[ZB3EX] Extra Item Main"
@@ -30,9 +27,6 @@ public plugin_init()
 		
 	register_plugin(PLUGIN, VERSION, AUTHOR)
 	register_dictionary("zombie_thehero2.txt")
-
-	register_forward(FM_ClientConnect, "fw_client_connect" );
-	register_forward(FM_ClientDisconnect, "fw_client_disconnect") 
 	
 	g_item_forward[FWD_ITEM_SELECTED_PRE] = CreateMultiForward("zb3_item_selected_pre", ET_IGNORE, FP_CELL, FP_CELL)
 	g_item_forward[FWD_ITEM_SELECTED_POST] = CreateMultiForward("zb3_item_selected_post", ET_IGNORE, FP_CELL, FP_CELL)
@@ -55,12 +49,12 @@ public plugin_precache()
 	item_team = ArrayCreate(1, 1)
 	item_permanent_buy = ArrayCreate(1, 1)
 }
-public fw_client_connect(id)
+public client_disconnected(id)
 {
 	reset_value_handle(id)
 }
 
-public fw_client_disconnect(id)
+public client_connected(id)
 {
 	reset_value_handle(id)
 }
@@ -151,7 +145,7 @@ public item_menu_handle(id, menu, item)
 		return PLUGIN_HANDLED
 	}
 	
-	if(cs_get_user_team(id) == CS_TEAM_CT && g_zombie_appear)
+	if( get_member(id, m_iTeam) == TEAM_CT && g_zombie_appear)
 	{
 		client_printc(id, "!g[Zombie: The Hero]!n %L", LANG_PLAYER, "SHOP_BUY_START")
 		return PLUGIN_HANDLED
@@ -169,7 +163,7 @@ public item_menu_handle(id, menu, item)
 	
 	static CurMoney, Cost, temp_string[128], temp_string2[128], temp_string3[10]
 	
-	CurMoney = cs_get_user_money(id)
+	CurMoney = get_member(id, m_iAccount);
 	Cost = zb3_get_freeitem_status() ? 0 : ArrayGetCell(item_cost, item_id)
 	
 	ArrayGetString(item_name, item_id, temp_string, sizeof(temp_string))
@@ -179,7 +173,7 @@ public item_menu_handle(id, menu, item)
 		if(CurMoney >= Cost)
 		{
 			ArrayGetString(item_desc, item_id, temp_string2, sizeof(temp_string2))
-			cs_set_user_money(id, CurMoney - Cost)
+			rg_add_account(id, CurMoney - Cost, AS_SET, true)
 			
 			if(ArrayGetCell(item_permanent_buy, item_id))
 				formatex(temp_string3, sizeof(temp_string3), "%L", LANG_PLAYER, "SHOP_PERMANENT_ITEM")
@@ -197,7 +191,7 @@ public item_menu_handle(id, menu, item)
 		if(CurMoney >= Cost)
 		{
 			ArrayGetString(item_desc, item_id, temp_string2, sizeof(temp_string2))
-			cs_set_user_money(id, CurMoney - Cost)
+			rg_add_account(id, CurMoney - Cost, AS_SET, true)
 			
 			if(ArrayGetCell(item_permanent_buy, item_id))
 				formatex(temp_string3, sizeof(temp_string3), "%L", LANG_PLAYER, "SHOP_PERMANENT_ITEM")

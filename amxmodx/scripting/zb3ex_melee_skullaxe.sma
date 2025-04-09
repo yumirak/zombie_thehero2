@@ -4,7 +4,7 @@
 #include <fakemeta_util>
 #include <hamsandwich>
 #include <zombie_thehero2>
-#include <cstrike>
+#include <reapi>
 #include <xs>
 
 #define PLUGIN "[Zombie: The Hero] Melee Weapon: Skull-Axe (A.K.A: Skull-9)"
@@ -27,7 +27,6 @@ new const miss_sound[] = "weapons/skullaxe_slash1.wav"
 
 new g_skullaxe
 new g_had_skullaxe[33], g_can_attack
-const m_szAnimExtention = 492
 
 #define is_valid_entity(%0) (pev_valid(%0) == 2)
 
@@ -142,7 +141,7 @@ public fw_Knife_SendAnim(ent, anim, skip_local)
 	if(!g_had_skullaxe[id])
 		return HAM_IGNORED
 	
-	set_pdata_string(id, m_szAnimExtention * 4, "skullaxe", -1 , 20)
+	set_member(id, m_szAnimExtention, "skullaxe" );
 
 	if(anim == KNIFE_ANIM_DRAW)
 	{
@@ -415,8 +414,9 @@ public Check_Slash(id, First_Check)
 		|| get_distance_f(VicOrigin, Point[3]) <= DISTANCE_FROM_ATTACK)
 		{
 			if(!Have_Victim) Have_Victim = 1
-			if(!First_Check && g_can_attack && cs_get_user_team(id) != cs_get_user_team(i)) do_attack(id, i, ent, DAMAGE_SLASH)
+			if(!First_Check && g_can_attack && get_member(id, m_iTeam) != get_member(i, m_iTeam)) do_attack(id, i, ent, DAMAGE_SLASH)
 		}
+
 	}	
 	
 	if(Have_Victim)
@@ -465,7 +465,7 @@ public Check_Stab(id, First_Check)
 		|| get_distance_f(VicOrigin, Point[3]) <= (DISTANCE_FROM_ATTACK * 2.0))
 		{
 			if(!Have_Victim) Have_Victim = 1
-			if(!First_Check && g_can_attack && cs_get_user_team(id) != cs_get_user_team(i)) do_attack(id, i, ent, DAMAGE_STAB)
+			if(!First_Check && g_can_attack && get_member(id, m_iTeam) != get_member(i, m_iTeam)) do_attack(id, i, ent, DAMAGE_STAB)
 		}
 	}	
 	

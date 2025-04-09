@@ -1,10 +1,6 @@
 #include <amxmodx>
-#include <amxmisc>
-#include <fakemeta_util>
-#include <hamsandwich>
-#include <cstrike>
+#include <reapi>
 #include <zombie_thehero2>
-#include <fun>
 
 #define PLUGIN "[ZB3] Addon: Weapon"
 #define VERSION "1.0"
@@ -16,11 +12,6 @@
 #define MAX_WEAPON 46
 #define MAX_TYPE 4
 #define MAX_FORWARD 4
-
-// Const
-const PRIMARY_WEAPONS_BIT_SUM = (1<<CSW_SCOUT)|(1<<CSW_XM1014)|(1<<CSW_MAC10)|(1<<CSW_AUG)|(1<<CSW_UMP45)|(1<<CSW_SG550)|(1<<CSW_GALIL)|(1<<CSW_FAMAS)|(1<<CSW_AWP)|(1<<CSW_MP5NAVY)|(1<<CSW_M249)|(1<<CSW_M3)|(1<<CSW_M4A1)|(1<<CSW_TMP)|(1<<CSW_G3SG1)|(1<<CSW_SG552)|(1<<CSW_AK47)|(1<<CSW_P90)
-const SECONDARY_WEAPONS_BIT_SUM = (1<<CSW_P228)|(1<<CSW_ELITE)|(1<<CSW_FIVESEVEN)|(1<<CSW_USP)|(1<<CSW_GLOCK18)|(1<<CSW_DEAGLE)
-const NADE_WEAPONS_BIT_SUM = ((1<<CSW_HEGRENADE)|(1<<CSW_SMOKEGRENADE)|(1<<CSW_FLASHBANG))
 
 new g_Forwards[MAX_FORWARD], g_GotWeapon[33]
 new g_WeaponList[5][MAX_WEAPON], g_WeaponListCount[5]
@@ -148,7 +139,7 @@ public Native_GiveRandomWeapon(id)
 	{
 		case 0..70:
 		{
-			drop_weapons(id, 1)
+			rg_drop_items_by_slot(id, PRIMARY_WEAPON_SLOT)
 			ExecuteForward(g_Forwards[WPN_BOUGHT], g_fwResult, id,  Pri)
 
 			if(!g_UnlockedWeapon[id][Pri]) 
@@ -156,7 +147,7 @@ public Native_GiveRandomWeapon(id)
 		}
 		case 71..100:
 		{
-			drop_weapons(id, 2)
+			rg_drop_items_by_slot(id, PISTOL_SLOT)
 			ExecuteForward(g_Forwards[WPN_BOUGHT], g_fwResult, id,  Sec)
 			if(!g_UnlockedWeapon[id][Sec]) 
 				g_UnlockedWeapon[id][Sec] = 1
@@ -482,8 +473,8 @@ public Show_WpnSubMenu(id, WpnType, Page)
 
 	new Menu = menu_create(MenuName, "MenuHandle_WpnSubMenu")
 
-	static WeaponType, WeaponName[32], MenuItem[64], ItemID[4]
-	static WeaponPrice, Money; Money = cs_get_user_money(id)
+	static WeaponType, WeaponName[32], MenuItem[64], MenuItemID[4]
+	static WeaponPrice, Money; Money = get_member(id, m_iAccount); // cs_get_user_money(id)
 	
 	for(new i = 0; i < g_TotalWeaponCount; i++)
 	{
@@ -507,8 +498,8 @@ public Show_WpnSubMenu(id, WpnType, Page)
 			formatex(MenuItem, sizeof(MenuItem), "%s", WeaponName)
 		}
 		
-		num_to_str(i, ItemID, sizeof(ItemID))
-		menu_additem(Menu, MenuItem, ItemID)
+		num_to_str(i, MenuItemID, sizeof(MenuItemID))
+		menu_additem(Menu, MenuItem, MenuItemID)
 	}
    
 	menu_setprop(Menu, MPROP_EXIT, MEXIT_ALL)
@@ -540,7 +531,7 @@ public MenuHandle_WpnSubMenu(id, Menu, Item)
 	WeaponPrice = zb3_get_freeitem_status() ? 0 : ArrayGetCell(ArWeaponCost, ItemId)
 	ArrayGetString(ArWeaponName, ItemId, WeaponName, sizeof(WeaponName))
 
-	new Money = cs_get_user_money(id)
+	new Money = get_member(id, m_iAccount);
 	new OutputInfo[80]
 	
 	if(WeaponPrice > 0)
@@ -558,7 +549,8 @@ public MenuHandle_WpnSubMenu(id, Menu, Item)
 				formatex(OutputInfo, sizeof(OutputInfo), "%L", GAME_LANG, "SHOP_BUY", WeaponName, WeaponPrice)
 				client_printc(id, OutputInfo)
 									
-				cs_set_user_money(id, Money - WeaponPrice, 1)
+				// cs_set_user_money(id, Money - WeaponPrice, 1)
+				rg_add_account(id, Money - WeaponPrice, AS_SET, true)
 				Show_MainEquipMenu(id)
 			} else {
 				formatex(OutputInfo, sizeof(OutputInfo), "%L", GAME_LANG, "SHOP_NOT_ENOUGH_MONEY", WeaponName ,WeaponPrice)
@@ -594,40 +586,18 @@ public Equip_Weapon(id)
 	// Equip: Secondary
 	if(g_PreWeapon[id][WPN_SECONDARY] != -1)
 	{
-		drop_weapons(id, 2)
+		rg_drop_items_by_slot(id, PISTOL_SLOT)
 		ExecuteForward(g_Forwards[WPN_BOUGHT], g_fwResult, id, g_PreWeapon[id][WPN_SECONDARY])
 	}
 		
 	// Equip: Primary
 	if(g_PreWeapon[id][WPN_PRIMARY] != -1)
 	{
-		drop_weapons(id, 1)
+		rg_drop_items_by_slot(id, PRIMARY_WEAPON_SLOT)
 		ExecuteForward(g_Forwards[WPN_BOUGHT], g_fwResult, id, g_PreWeapon[id][WPN_PRIMARY])
 	}
 	
 	g_GotWeapon[id] = 1
-}
-// Drop primary/secondary weapons
-stock drop_weapons(id, dropwhat)
-{
-	// Get user weapons
-	static weapons[32], num, i, weaponid
-	num = 0 // reset passed weapons count (bugfix)
-	get_user_weapons(id, weapons, num)
-	
-	// Loop through them and drop primaries or secondaries
-	for (i = 0; i < num; i++)
-	{
-		// Prevent re-indexing the array
-		weaponid = weapons[i]
-		
-		if ((dropwhat == 1 && ((1<<weaponid) & PRIMARY_WEAPONS_BIT_SUM)) || (dropwhat == 2 && ((1<<weaponid) & SECONDARY_WEAPONS_BIT_SUM)))
-		{
-			// Get weapon entity
-			static wname[32]; get_weaponname(weaponid, wname, charsmax(wname))
-			engclient_cmd(id, "drop", wname)
-		}
-	}
 }
 
 stock client_printc(index, const text[], any:...)
@@ -647,6 +617,3 @@ stock client_printc(index, const text[], any:...)
 	}
 } 
 
-/* AMXX-Studio Notes - DO NOT MODIFY BELOW HERE
-*{\\ rtf1\\ ansi\\ deff0{\\ fonttbl{\\ f0\\ fnil Tahoma;}}\n\\ viewkind4\\ uc1\\ pard\\ lang1042\\ f0\\ fs16 \n\\ par }
-*/
