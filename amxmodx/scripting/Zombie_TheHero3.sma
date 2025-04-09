@@ -51,7 +51,7 @@ new g_zombie[33], g_hero[33], g_hero_locked[33], g_iRespawning[33], g_sex[33], g
 g_zombie_class[33], g_zombie_type[33], g_level[33], g_RespawnTime[33], g_unlocked_class[33][MAX_ZOMBIECLASS],
 g_can_choose_class[33], g_restore_health[33], g_iMaxLevel[33], Float:g_iEvolution[33], g_zombie_respawn_time[33], g_free_gun,
 g_InfectMultiplier[33]
-new g_firstzombie , countdown_time , zombie_level2_health, zombie_level2_armor, zombie_level3_health, zombie_level3_armor, //zombie_maxhealth, zombie_maxarmor,
+new g_firstzombie, g_firsthuman, countdown_time , zombie_level2_health, zombie_level2_armor, zombie_level3_health, zombie_level3_armor, //zombie_maxhealth, zombie_maxarmor,
 zombie_minhealth, zombie_minarmor,
 g_zombieorigin_defaultlevel, grenade_default_power, human_health, human_armor,
 g_respawn_time, g_respawn_icon[64], g_respawn_iconid, g_health_reduce_percent
@@ -1011,7 +1011,7 @@ public Event_NewRound()
 {
 	g_gamestart = 0
 	g_endround = 0
-	g_firstzombie = 0
+	g_firstzombie = g_firsthuman = 0
 
 	remove_game_task()
 	StopSound(0)
@@ -2000,7 +2000,10 @@ public start_game_now()
 	}*/
 	Required_Zombie = floatround(float(Total_Player + 1) / 8, floatround_ceil)
 	Required_Hero = Total_Player / 16 // max 2 heroes
-	g_firstzombie = Required_Zombie // used for consistent first zombie health
+
+	// used for consistent first zombie health
+	g_firstzombie = Required_Zombie
+	g_firsthuman  = Total_Player - Required_Zombie
 
 	// Get and Set Zombie
 	while(GetTotalPlayer(TEAM_ZOMBIE, 1) < Required_Zombie)
@@ -2223,14 +2226,14 @@ public set_user_zombie(id, attacker, bool:Origin_Zombie, bool:Respawn)
 		show_dhudmessage(id, "%L", LANG_PLAYER, "ZOMBIE_COMING")
 	}
 
-	start_zombie_health[ZOMBIE_ORIGIN] = (GetTotalPlayer(TEAM_HUMAN, 1) / g_firstzombie) * 1000
-	start_zombie_health[ZOMBIE_HOST]   = clamp(( get_user_health(attacker) / 100) * g_InfectMultiplier[id] , zombie_minhealth, zombie_maxhealth)
+	start_zombie_health[ZOMBIE_ORIGIN] = floatround(float(g_firsthuman) / float(g_firstzombie) * 1000.0)
+	start_zombie_health[ZOMBIE_HOST]   = clamp( floatround( get_user_health(attacker) * 0.01 * g_InfectMultiplier[id] ), zombie_minhealth, zombie_maxhealth)
 
 	start_zombie_armor [ZOMBIE_ORIGIN] = zombie_maxarmor
-	start_zombie_armor [ZOMBIE_HOST]   = clamp(( get_user_armor(attacker) / 100 ) * g_InfectMultiplier[id] , zombie_minarmor, zombie_maxarmor)
+	start_zombie_armor [ZOMBIE_HOST]   = clamp( floatround( get_user_armor(attacker)  * 0.01 * g_InfectMultiplier[id] ), zombie_minarmor, zombie_maxarmor)
 
-	respawn_zombie_health = clamp(( g_StartHealth[id] / 100 ) * ( 100 + g_health_reduce_percent ), zombie_minhealth, zombie_maxhealth )
-	respawn_zombie_armor  = clamp(( g_StartArmor[id] / 100 ) * ( 100 + g_health_reduce_percent ), zombie_minarmor, zombie_maxarmor)
+	respawn_zombie_health = clamp( floatround(g_StartHealth[id] * 0.01 * ( 100 + g_health_reduce_percent )), zombie_minhealth, zombie_maxhealth )
+	respawn_zombie_armor  = clamp( floatround(g_StartArmor[id]  * 0.01 * ( 100 + g_health_reduce_percent )), zombie_minarmor, zombie_maxarmor)
 #endif
 
 	fm_set_rendering(id, kRenderNormal, 0, 0, 0, kRenderNormal, 0)
