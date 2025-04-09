@@ -2109,7 +2109,6 @@ public Lock_Hero(id)
 	g_hero_locked[id] = 1
 }
 
-// TODO: Simplify this
 public set_user_zombie(id, attacker, bool:Origin_Zombie, bool:Respawn)
 {
 	if(!is_user_alive(id))
@@ -2183,48 +2182,7 @@ public set_user_zombie(id, attacker, bool:Origin_Zombie, bool:Respawn)
 
 	// Fix "Dead" Atrib
 	set_scoreboard_attrib(id, 0)
-	
-	zombie_appear_sound(Respawn)	
-#if 0
-	// Set Health
-	switch(Origin_Zombie)
-	{
-		case true:
-		{
-			if(!Respawn){
-				g_StartHealth[id] = (GetTotalPlayer(TEAM_ALL, 1) / g_firstzombie) * 1000
-				g_StartArmor[id] =  zombie_maxarmor
-				
-				set_dhudmessage(0, 160, 0, MAIN_HUD_X, MAIN_HUD_Y_BOTTOM , 2, 1.0, 3.0, 0.005 , 0.1) 
-				show_dhudmessage(id, "%L", LANG_PLAYER, "ZOMBIE_COMING")
-			} else {
-				g_StartHealth[id] =  clamp(( g_StartHealth[id] / 100 ) * ( 100 + g_health_reduce_percent ), zombie_minhealth, zombie_maxhealth )
-				g_StartArmor[id] = clamp(( g_StartArmor[id] / 100 ) * ( 100 + g_health_reduce_percent ), zombie_minarmor, zombie_maxarmor)
-			}
-		}
-		case false:
-		{
-			if(is_user_connected(attacker) && is_user_alive(attacker) && !Respawn){
-				g_StartHealth[id] = clamp(( get_user_health(attacker) / 100) * g_InfectMultiplier[id] , zombie_minhealth, zombie_maxhealth) 
-				g_StartArmor[id] = clamp(( get_user_armor(attacker) / 100 ) * g_InfectMultiplier[id] , zombie_minarmor, zombie_maxarmor)
-			} else {
-				if(!Respawn){ // in case player become host zombie without infector
-					g_StartHealth[id] = clamp((GetTotalPlayer(TEAM_ALL, 1) / g_firstzombie) * 1000, zombie_minhealth, zombie_maxhealth )
-					g_StartArmor[id] = zombie_maxarmor
-				} else {
-					g_StartHealth[id] = clamp(( g_StartHealth[id] / 100 ) * ( 100 + g_health_reduce_percent ), zombie_minhealth, zombie_maxhealth)
-					g_StartArmor[id] = clamp(( g_StartArmor[id] / 100 ) * ( 100 + g_health_reduce_percent ), zombie_minarmor, zombie_maxarmor)
-				}
-			}
-		}
-	}
-	
-#else
-	if( Origin_Zombie && !Respawn )
-	{
-		set_dhudmessage(0, 160, 0, MAIN_HUD_X, MAIN_HUD_Y_BOTTOM , 2, 1.0, 3.0, 0.005 , 0.1)
-		show_dhudmessage(id, "%L", LANG_PLAYER, "ZOMBIE_COMING")
-	}
+	zombie_appear_sound(Respawn)
 
 	start_zombie_health[ZOMBIE_ORIGIN] = floatround(float(g_firsthuman) / float(g_firstzombie) * 1000.0)
 	start_zombie_health[ZOMBIE_HOST]   = clamp( floatround( get_user_health(attacker) * 0.01 * g_InfectMultiplier[id] ), zombie_minhealth, zombie_maxhealth)
@@ -2234,7 +2192,6 @@ public set_user_zombie(id, attacker, bool:Origin_Zombie, bool:Respawn)
 
 	respawn_zombie_health = clamp( floatround(g_StartHealth[id] * 0.01 * ( 100 + g_health_reduce_percent )), zombie_minhealth, zombie_maxhealth )
 	respawn_zombie_armor  = clamp( floatround(g_StartArmor[id]  * 0.01 * ( 100 + g_health_reduce_percent )), zombie_minarmor, zombie_maxarmor)
-#endif
 
 	fm_set_rendering(id, kRenderNormal, 0, 0, 0, kRenderNormal, 0)
 	rg_reset_user_weapon(id)
@@ -2245,10 +2202,10 @@ public set_user_zombie(id, attacker, bool:Origin_Zombie, bool:Respawn)
 	g_zombie_type[id] = Origin_Zombie ? ZOMBIE_ORIGIN : ZOMBIE_HOST
 	set_user_nightvision(id, g_NvgState[id], 1, 1)
 	set_weapon_anim(id, 3)
-#if 1
+
 	g_StartHealth[id] = Respawn ? respawn_zombie_health : start_zombie_health[ g_zombie_type[id] ]
 	g_StartArmor[id]  = Respawn ? respawn_zombie_armor  : start_zombie_armor [ g_zombie_type[id] ]
-#endif
+
 	fm_set_user_health(id, g_StartHealth[id])
 	rg_set_user_armor(id, g_StartArmor[id], ARMOR_KEVLAR)
 	fm_set_user_speed(id, ArrayGetCell(g_zombie_type[id] == ZOMBIE_HOST ? zombie_speed_host : zombie_speed_origin , g_zombie_class[id]))
