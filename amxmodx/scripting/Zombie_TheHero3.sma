@@ -15,6 +15,7 @@
 #define AUTHOR "Dias"
 
 // #define _DEBUG
+#define REGAME_REAPI
 
 // Configs
 new const SETTING_FILE[] = "zombie_thehero/config.ini"
@@ -1231,8 +1232,6 @@ public fw_PlayerSpawn_Post(id)
 	if(!is_user_connected(id)) 
 		return
 
-	client_printc(id, "!g[%s]!n %L", GAMENAME, LANG_PLAYER , "NOTICE_MISSCLICK")
-
 	if(GetTotalPlayer(TEAM_ALL, 1) > 1 && !g_game_playable)
 	{
 		g_game_playable = 1
@@ -1247,6 +1246,8 @@ public fw_PlayerSpawn_Post(id)
 
 		return
 	}
+
+	client_printc(id, "!g[%s]!n %L", GAMENAME, LANG_PLAYER , "NOTICE_MISSCLICK")
 	
 	// Reset this Player
 	reset_player(id, 0, 0)
@@ -1306,8 +1307,8 @@ public fw_PlayerTakeDamage_Post(victim, inflictor, attacker, Float:damage, damag
 
 	SetHamParamFloat(4, damage)
 
-	fm_cs_set_user_money(attacker, fm_cs_get_user_money(attacker) + floatround(damage) / 8, 1)
-	fm_cs_set_user_money(victim, fm_cs_get_user_money(victim) + floatround(damage) / 16, 1)
+	fm_cs_set_user_money(attacker, fm_cs_get_user_money(attacker) + floatround(damage) / 8, true)
+	fm_cs_set_user_money(victim, fm_cs_get_user_money(victim) + floatround(damage) / 16, true)
 
 	switch(g_level[victim])
 	{
@@ -1316,7 +1317,11 @@ public fw_PlayerTakeDamage_Post(victim, inflictor, attacker, Float:damage, damag
 	}
 
 	if(g_iEvolution[victim] > 10.0) UpdateLevelZombie(victim)
+#if defined REGAME_REAPI
+	if(pev_valid(victim) == 2) set_member(victim, m_flVelocityModifier, zb_class_painshock)
+#else
 	if(pev_valid(victim) == 2) set_pdata_float(victim, OFFSET_PAINSHOCK, zb_class_painshock, LINUX_EXTRAOFFSET)
+#endif
 	if(g_restore_health[victim]) g_restore_health[victim] = 0
 			
 		
@@ -1334,7 +1339,7 @@ public fw_PlayerTraceAttack(victim, attacker, Float:Damage, Float:direction[3], 
 		return HAM_IGNORED
 
 	set_user_zombie(victim, attacker, false, false)
-	fm_cs_set_user_money(attacker, fm_cs_get_user_money(attacker) + 500, 1)
+	fm_cs_set_user_money(attacker, fm_cs_get_user_money(attacker) + 500, true)
 
 	return HAM_HANDLED
 
@@ -2257,8 +2262,12 @@ public show_menu_zombieclass(id, page)
 		return
 	if(!g_zombie[id] || !g_can_choose_class[id])
 		return
-		
-	if(pev_valid(id) == 2) set_pdata_int(id, 205, 0, LINUX_EXTRAOFFSET)	
+
+#if defined REGAME_REAPI
+	if(pev_valid(id) == 2) set_member(id, m_iMenu, CS_Menu_OFF)
+#else
+	if(pev_valid(id) == 2) set_pdata_int(id, 205, 0, LINUX_EXTRAOFFSET)
+#endif
 
 	new menuwpn_title[64], temp_string[128]
 	format(menuwpn_title, 63, "%L:", LANG_PLAYER, "MENU_CLASSZOMBIE_TITLE")
@@ -2618,11 +2627,6 @@ stock rg_reset_user_weapon(id)
 	else rg_give_item(id, "weapon_knife")
 }
 
-stock round(num)
-{	
-	return num - num % 100
-}
-
 stock GetRandomAlive()
 {
 	new id, check_vl
@@ -2656,7 +2660,7 @@ stock GetTotalPlayer({PlayerTeams,_}:team, alive)
 			if(
 			team == TEAM_ZOMBIE && g_zombie[id] || 
 			team == TEAM_HUMAN && !g_zombie[id] ||
-			team == TEAM_ALL
+			(team == TEAM_ALL && fm_cs_get_user_team(id) == TEAM_CT && fm_cs_get_user_team(id) == TEAM_TERRORIST)
 			) total++
 		}
 	}
@@ -2724,25 +2728,36 @@ public set_team(id, {PlayerTeams,_}:team)
 	
 	switch(team)
 	{
-		case TEAM_HUMAN: if(fm_cs_get_user_team(id) != FM_CS_TEAM_CT) fm_cs_set_user_team(id, FM_CS_TEAM_CT, 1)
-		case TEAM_ZOMBIE: if(fm_cs_get_user_team(id) != FM_CS_TEAM_T) fm_cs_set_user_team(id, FM_CS_TEAM_T, 1)
+		case TEAM_HUMAN:  if(fm_cs_get_user_team(id) != TEAM_CT) fm_cs_set_user_team(id, TEAM_CT, 1)
+		case TEAM_ZOMBIE: if(fm_cs_get_user_team(id) != TEAM_TERRORIST) fm_cs_set_user_team(id, TEAM_TERRORIST, 1)
 	}
 }
 
-stock fm_cs_get_user_team(client, &{CsInternalModel,_}:model=CS_DONTCHANGE)
+stock TeamName:fm_cs_get_user_team(client)
 {
+#if !defined REGAME_REAPI
 	model = CsInternalModel:get_pdata_int(client, OFFSET_INTERALMODEL, LINUX_EXTRAOFFSET);
 	
 	return get_pdata_int(client, OFFSET_TEAM, LINUX_EXTRAOFFSET);
+#else
+	new TeamName:team = get_member(client, m_iTeam);
+	return team;
+#endif
 }
 
 stock fm_cs_get_user_money(client)
 {
+#if !defined REGAME_REAPI
 	return get_pdata_int(client, OFFSET_MONEY, LINUX_EXTRAOFFSET);
+#else
+	return get_member(client, m_iAccount);
+#endif
+
 }
 
-stock fm_cs_set_user_money(client, money, flash=1)
+stock fm_cs_set_user_money(id, money, bool:flash= true )
 {
+#if !defined REGAME_REAPI
 	set_pdata_int(client, OFFSET_MONEY, money, LINUX_EXTRAOFFSET);
 	
 	static Money;
@@ -2753,27 +2768,40 @@ stock fm_cs_set_user_money(client, money, flash=1)
 		ewrite_byte(flash ? 1 : 0);
 		emessage_end();
 	}
+#else
+	rg_add_account(id, money, AS_SET, flash)
+#endif
 }
 
 stock fm_cs_get_weapon_id(entity)
 {
+#if !defined REGAME_REAPI
 	return get_pdata_int(entity, OFFSET_WEAPONID, LINUX_EXTRAOFFSET_WEAPONS);
+#else
+	return rg_get_iteminfo(entity, ItemInfo_iId)
+#endif
 }
 
 stock fm_cs_get_user_deaths(client)
 {
+#if !defined REGAME_REAPI
 	return get_pdata_int(client, OFFSET_DEATHS, LINUX_EXTRAOFFSET);
+#else
+	return get_member(client, m_iDeaths);
+#endif
 }
 
+#if !defined REGAME_REAPI
 stock fm_cs_get_weapon_ammo(entity)
 {
 	return get_pdata_int(entity, OFFSET_WEAPONCLIP, LINUX_EXTRAOFFSET_WEAPONS);
 }
-
+#endif
 
 // Set a Player's Team
-stock fm_cs_set_user_team(id, team, send_message)
+stock fm_cs_set_user_team(id, TeamName:team, send_message)
 {
+#if !defined REGAME_REAPI
 	// Prevent server crash if entity's private data not initalized
 	if (pev_valid(id) != PDATA_SAFE)
 		return;
@@ -2789,7 +2817,13 @@ stock fm_cs_set_user_team(id, team, send_message)
 	set_pdata_int(id, OFFSET_CSTEAMS, _:team)
 	
 	// Send message to update team?
-	if (send_message) fm_user_team_update(id)
+	if (send_message) set_task(TEAMCHANGE_DELAY, "fm_cs_set_user_team_msg", id+TASK_TEAMMSG) // fm_user_team_update(id)
+#else
+	remove_task(id+TASK_TEAMMSG)
+	set_member(id, m_iTeam, team);
+	// rg_set_user_team(id, TeamName:team) // bug: fakeclient can't join game
+	if (send_message) set_task(TEAMCHANGE_DELAY, "fm_cs_set_user_team_msg", id+TASK_TEAMMSG)
+#endif
 }
 
 // Send User Team Message (Note: this next message can be received by other plugins)
@@ -2810,7 +2844,7 @@ public fm_cs_set_user_team_msg(taskid)
 	ewrite_short(_:fm_cs_get_user_team(ID_TEAMMSG)) // team
 	emessage_end()
 }
-
+#if 0
 // Update Player's Team on all clients (adding needed delays)
 stock fm_user_team_update(id)
 {	
@@ -2828,7 +2862,7 @@ stock fm_user_team_update(id)
 		g_TeamMsgTargetTime = g_TeamMsgTargetTime + TEAMCHANGE_DELAY
 	}
 }
-
+#endif
 // ======================== Round Terminator ======================
 // ================================================================
 stock bool:TerminateRound({PlayerTeams,_}:team)
