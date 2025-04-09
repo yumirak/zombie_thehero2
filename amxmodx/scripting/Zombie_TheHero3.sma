@@ -1503,8 +1503,13 @@ public fw_PlayerPreThink(id)
 		set_pev(id, pev_maxspeed, g_PlayerMaxSpeed[id])
 	if(g_zombie[id]) zombie_restore_health(id)	
 }
+public fw_TraceLine(Float:fStart[3], Float:fEnd[3], ignored_monster, id, ptr)
+	return vTrace(id, ptr,fStart,fEnd,ignored_monster, false)
 
-public fw_TraceLine(Float:vector_start[3], Float:vector_end[3], ignored_monster, id, handle)
+public fw_TraceHull(Float:fStart[3], Float:fEnd[3], ignored_monster, hull, id, ptr)
+	return vTrace(id, ptr,fStart,fEnd,ignored_monster, true,hull)
+
+vTrace(id, handle, Float:vecStart[3], Float:vecEnd[3], ignored_monster, bool:bHull = false, iHull = 0)
 {
 	if (!is_user_alive(id) || !g_zombie[id])
 		return FMRES_IGNORED
@@ -1517,44 +1522,7 @@ public fw_TraceLine(Float:vector_start[3], Float:vector_end[3], ignored_monster,
 	if (!(buttons & IN_ATTACK) && !(buttons & IN_ATTACK2))
 		return FMRES_IGNORED
 		
-	new Float:vecStart[3], Float:vecEnd[3], Float:v_angle[3], Float:v_forward[3], Float:view_ofs[3], Float:fOrigin[3]
-	pev(id, pev_origin, fOrigin)
-	pev(id, pev_view_ofs, view_ofs)
-	xs_vec_add(fOrigin, view_ofs, vecStart)
-	pev(id, pev_v_angle, v_angle)
-	engfunc(EngFunc_MakeVectors, v_angle)
-	get_global_vector(GL_v_forward, v_forward)
-	
-	new Float:scalar
-	const Float:DEFAULT_KNIFE_SCALAR = 48.0
-	
-	if (buttons & IN_ATTACK)
-		scalar = ArrayGetCell(zombie_claw_distance1, g_zombie_class[id])
-	else if (buttons & IN_ATTACK2)
-		scalar = ArrayGetCell(zombie_claw_distance2,  g_zombie_class[id])
-		
-	xs_vec_mul_scalar(v_forward, scalar * DEFAULT_KNIFE_SCALAR, v_forward)
-	xs_vec_add(vecStart, v_forward, vecEnd)
-	
-	engfunc(EngFunc_TraceLine, vecStart, vecEnd, ignored_monster, id, handle)
-	
-	return FMRES_SUPERCEDE
-}
-
-public fw_TraceHull(Float:vector_start[3], Float:vector_end[3], ignored_monster, hull, id, handle)
-{
-	if (!is_user_alive(id) || !g_zombie[id])
-		return FMRES_IGNORED
-	if (get_user_weapon(id) != CSW_KNIFE)
-		return FMRES_IGNORED
-		
-	static buttons
-	buttons = pev(id, pev_button)
-	
-	if (!(buttons & IN_ATTACK) && !(buttons & IN_ATTACK2))
-		return FMRES_IGNORED
-		
-	new Float:vecStart[3], Float:vecEnd[3], Float:v_angle[3], Float:v_forward[3], Float:view_ofs[3], Float:fOrigin[3]
+	new Float:v_angle[3], Float:v_forward[3], Float:view_ofs[3], Float:fOrigin[3]
 	pev(id, pev_origin, fOrigin)
 	pev(id, pev_view_ofs, view_ofs)
 	xs_vec_add(fOrigin, view_ofs, vecStart)
@@ -1573,8 +1541,12 @@ public fw_TraceHull(Float:vector_start[3], Float:vector_end[3], ignored_monster,
 	xs_vec_mul_scalar(v_forward, scalar * DEFAULT_KNIFE_SCALAR, v_forward)
 	xs_vec_add(vecStart, v_forward, vecEnd)
 	
-	engfunc(EngFunc_TraceHull, vecStart, vecEnd, ignored_monster, hull, id, handle)
-	
+	switch( bHull )
+	{
+		case true:  engfunc(EngFunc_TraceHull, vecStart, vecEnd, ignored_monster, iHull, id, handle)
+		case false: engfunc(EngFunc_TraceLine, vecStart, vecEnd, ignored_monster, id, handle)
+	}
+
 	return FMRES_SUPERCEDE
 }
 
