@@ -1022,7 +1022,7 @@ public Event_NewRound()
 
 public Event_RoundStart()
 {
-	if(GetTotalPlayer(TEAM_ALL, 1) < 2)
+	if(GetTotalPlayer(TEAM_ALL, 0) < 2)
 	{
 		g_game_playable = 0
 		set_task(1.0, "requirement_unmeet",TASK_NOTICE)
@@ -1223,6 +1223,12 @@ public Time_Change()
 			
 		//show_score_hud(i)
 		ExecuteForward(g_Forwards[FWD_SKILL_HUD], g_fwResult, i)
+	}
+
+	if(GetTotalPlayer(TEAM_ALL, 0) > 1 && !g_game_playable)
+	{
+		g_game_playable = 1
+		TerminateRound(TEAM_START)
 	}
 }
 // ===================== HAM & FM FORWARDS ========================
@@ -2660,7 +2666,7 @@ stock GetTotalPlayer({PlayerTeams,_}:team, alive)
 			if(
 			team == TEAM_ZOMBIE && g_zombie[id] || 
 			team == TEAM_HUMAN && !g_zombie[id] ||
-			(team == TEAM_ALL && fm_cs_get_user_team(id) == TEAM_CT && fm_cs_get_user_team(id) == TEAM_TERRORIST)
+			(team == TEAM_ALL && (fm_cs_get_user_team(id) == TEAM_CT || fm_cs_get_user_team(id) == TEAM_TERRORIST))
 			) total++
 		}
 	}
