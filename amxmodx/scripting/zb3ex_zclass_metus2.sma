@@ -289,7 +289,17 @@ public zb3_skill_show(id)
 		g_can_charge[id] = 1
 		
 }
-
+public zb3_zombie_evolution(id, level)
+{
+	if(level > 1 && zb3_get_user_zombie(id) && zb3_get_user_zombie_class(id) == g_zombie_classid)
+	{
+		if(g_charging[id] && task_exists(id+TASK_CHARGING))
+		{
+			remove_task(id+TASK_CHARGING) // break charge when evolution
+			Remove_Charge(id+TASK_CHARGING)
+		}
+	}
+}
 stock set_fov(id, num = 90)
 {
 	if(!is_user_connected(id))

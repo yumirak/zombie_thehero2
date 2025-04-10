@@ -229,8 +229,8 @@ public cmd_drop(id)
 
 public Do_Berserk(id)
 {
-	//if((get_user_health(id) - HEALTH_DECREASE) > HEALTH_REQUIRE)
-	//{
+	if((get_user_health(id) - HEALTH_DECREASE) > HEALTH_REQUIRE)
+	{
 		zb3_reset_user_speed(id)
 		
 		// Set Vars
@@ -239,7 +239,7 @@ public Do_Berserk(id)
 		g_current_time[id] = 0
 		
 		// Decrease Health
-		//zb3_set_user_health(id, get_user_health(id) - HEALTH_DECREASE)
+		zb3_set_user_health(id, get_user_health(id) - HEALTH_DECREASE)
 		
 		// Set Render Red
 		zb3_set_user_rendering(id, kRenderFxGlowShell, BERSERK_COLOR_R, BERSERK_COLOR_G, BERSERK_COLOR_B, kRenderNormal, 0)
@@ -259,16 +259,15 @@ public Do_Berserk(id)
 		
 		static Float:SkillTime
 		SkillTime = zb3_get_user_level(id) > 1 ? float(BERSERK_TIME_ORIGIN) : float(BERSERK_TIME_HOST)
-		if(task_exists(id+TASK_BERSERKING)) remove_task(id+TASK_BERSERKING)	
+		if(task_exists(id+TASK_BERSERKING)) remove_task(id+TASK_BERSERKING)
 		set_task(SkillTime, "Remove_Berserk", id+TASK_BERSERKING)
-	//} else {
-	//	client_print(id, print_center, "%L", LANG_OFFICIAL, "ZOMBIE_REGULAR_CANTBERSERK")
-	//}
+	} else {
+		client_print(id, print_center, "%L", LANG_OFFICIAL, "ZOMBIE_REGULAR_CANTBERSERK")
+	}
 }
 
 public Remove_Berserk(id)
 {
-
 	id -= TASK_BERSERKING
 
 	if(!is_user_alive(id))
@@ -342,16 +341,20 @@ public zb3_skill_show(id)
 	ShowSyncHudMsg(id, g_synchud1, "%L", LANG_PLAYER, "ZOMBIE_SKILL_SINGLE", zclass_desc, percent2)
 		
 	if(percent2 >= 99 && !g_can_berserk[id]) g_can_berserk[id] = 1	
-}/*
+}
+
 public zb3_zombie_evolution(id, level)
 {
 	if(level > 1 && zb3_get_user_zombie(id) && zb3_get_user_zombie_class(id) == g_zombie_classid)
 	{
-		if(g_berserking[id])
-			Remove_Berserk(id+TASK_BERSERKING) // break berserk when evolution
+		if(g_berserking[id] && task_exists(id+TASK_BERSERKING))
+		{
+			remove_task(id+TASK_BERSERKING) // break berserk when evolution
+			Remove_Berserk(id+TASK_BERSERKING)
+		}
 	}
+}
 
-}*/
 stock set_fov(id, num = 90)
 {
 	if(!is_user_connected(id))

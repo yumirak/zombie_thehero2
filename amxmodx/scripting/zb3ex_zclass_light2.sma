@@ -246,7 +246,7 @@ public Do_Invisible(id)
 	// Set Time
 	static Float:SkillTime
 	SkillTime = zb3_get_user_level(id) > 1 ? float(INVISIBLE_TIME_ORIGIN) : float(INVISIBLE_TIME_HOST)
-	
+	if(task_exists(id+TASK_INVISIBLE)) remove_task(id+TASK_INVISIBLE)
 	set_task(SkillTime, "Remove_Invisible", id+TASK_INVISIBLE)
 }
 
@@ -316,10 +316,12 @@ public zb3_zombie_evolution(id, level)
 {
 	if(level > 1 && zb3_get_user_zombie(id) && zb3_get_user_zombie_class(id) == g_zombie_classid )
 	{
-		if(g_invis[id])
+		if(g_invis[id] && task_exists(id+TASK_INVISIBLE) )
+		{
+			remove_task(id+TASK_INVISIBLE)
 			Remove_Invisible(id+TASK_INVISIBLE) // break invisibility when evolution
+		}
 	}
-
 }
 stock set_fov(id, num = 90)
 {
