@@ -2119,9 +2119,6 @@ public set_user_zombie(id, attacker, bool:Origin_Zombie, bool:Respawn)
 	static zombie_maxhealth, zombie_maxarmor;
 	new start_zombie_health[2], start_zombie_armor[2] , respawn_zombie_health, respawn_zombie_armor
 
-	zombie_maxhealth = g_level[id] > 2 ? zombie_level3_health : zombie_level2_health
-	zombie_maxarmor  = g_level[id] > 2 ? zombie_level3_armor  : zombie_level2_armor 
-
 	switch(g_sex[id])
 	{
 		case SEX_MALE: ArrayGetString(sound_infect_male, get_random_array(sound_infect_male), DeathSound, sizeof(DeathSound))
@@ -2183,6 +2180,9 @@ public set_user_zombie(id, attacker, bool:Origin_Zombie, bool:Respawn)
 	// Fix "Dead" Atrib
 	set_scoreboard_attrib(id, 0)
 	zombie_appear_sound(Respawn)
+
+	zombie_maxhealth = g_level[id] > 2 ? zombie_level3_health : zombie_level2_health
+	zombie_maxarmor  = g_level[id] > 2 ? zombie_level3_armor  : zombie_level2_armor
 
 	start_zombie_health[ZOMBIE_ORIGIN] = floatround(float(g_firsthuman) / float(g_firstzombie) * 1000.0)
 	start_zombie_health[ZOMBIE_HOST]   = clamp( floatround( get_user_health(attacker) * 0.01 * g_InfectMultiplier[id] ), zombie_minhealth, zombie_maxhealth)
