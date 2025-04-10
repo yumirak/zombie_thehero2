@@ -27,7 +27,7 @@
 //#define WEAPONLIST
 // Main
 #define WEAPON_REFERANCE		"weapon_deagle"
-#define WEAPON_NAME 			"weapon_ddeagle"
+#define WEAPON_NAME 			"weapon_deagleD"
 
 #define WEAPON_MAX_CLIP			28
 #define WEAPON_DEFAULT_AMMO		240
@@ -56,9 +56,9 @@
 
 // Sprites
 #if defined WEAPONLIST
-#define WEAPON_HUD_TXT		"sprites/weapon_ddeagle.txt"
+#define WEAPON_HUD_TXT		"sprites/weapon_deagled.txt"
 #define WEAPON_HUD_SPR_1	"sprites/640hud7.spr"
-#define WEAPON_HUD_SPR_2	"sprites/640hud27.spr"
+#define WEAPON_HUD_SPR_2	"sprites/640hud32.spr"
 #endif
 // Animation
 #define ANIM_EXTENSION		"dualpistols"

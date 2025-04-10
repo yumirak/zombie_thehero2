@@ -29,7 +29,7 @@
 
 // Main
 #define WEAPON_REFERANCE		"weapon_ak47"
-#define WEAPON_NAME 			"weapon_ak47long"
+#define WEAPON_NAME 			"weapon_ak47L"
 
 #define WEAPON_MAX_CLIP			60
 #define WEAPON_DEFAULT_AMMO		240
@@ -58,9 +58,9 @@
 
 // Sprites
 #if defined WEAPONLIST
-#define WEAPON_HUD_TXT		"sprites/weapon_ak47long.txt"
+#define WEAPON_HUD_TXT		"sprites/weapon_ak47l.txt"
 #define WEAPON_HUD_SPR_1	"sprites/640hud7.spr"
-#define WEAPON_HUD_SPR_2	"sprites/640hud27.spr"
+#define WEAPON_HUD_SPR_2	"sprites/640hud32.spr"
 #endif
 
 // Animation

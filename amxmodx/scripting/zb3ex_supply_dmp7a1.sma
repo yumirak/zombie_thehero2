@@ -27,7 +27,7 @@
 //#define WEAPONLIST
 // Main
 #define WEAPON_REFERANCE		"weapon_p90"
-#define WEAPON_NAME 			"weapon_dmp7a1"
+#define WEAPON_NAME 			"weapon_mp7a1D"
 
 #define WEAPON_MAX_CLIP			80
 #define WEAPON_DEFAULT_AMMO		240
@@ -56,9 +56,9 @@
 
 // Sprites
 #if defined WEAPONLIST
-#define WEAPON_HUD_TXT		"sprites/weapon_dmp7a1.txt"
+#define WEAPON_HUD_TXT		"sprites/weapon_mp7a1d.txt"
 #define WEAPON_HUD_SPR_1	"sprites/640hud7.spr"
-#define WEAPON_HUD_SPR_2	"sprites/640hud27.spr"
+#define WEAPON_HUD_SPR_2	"sprites/640hud21.spr"
 #endif
 // Animation
 #define ANIM_EXTENSION		"dualpistols"
